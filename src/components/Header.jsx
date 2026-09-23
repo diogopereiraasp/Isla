@@ -57,7 +57,7 @@ export default function Header({
         </div>
 
         {/* Right Section: Mode Selector & Buttons */}
-        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
           
           {/* Mode Switcher: 1. Aprender | 2. Recordação Ativa | 3. Repetição */}
           <div className="bg-[#131b2e] p-1 rounded-xl border border-[#1f2b45] flex items-center text-xs font-semibold shrink-0">

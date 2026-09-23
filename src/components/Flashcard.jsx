@@ -59,6 +59,47 @@ export default function Flashcard({
     setTimeout(() => setCopiedRevealed(false), 1500);
   };
 
+  /**
+   * Renderiza o texto em inglês com cada palavra interativa
+   * Ao passar o mouse: sublinha com animação
+   * Ao clicar: abre o Cambridge Dictionary em nova aba
+   */
+  const renderInteractiveEnglishText = (text, className = '') => {
+    if (!text) return null;
+
+    // Divide preservando palavras e pontuações/espaços
+    const tokens = text.split(/(\s+|[.,/#!$%^&*;:{}=\-_`~()?'"]+)/);
+
+    return (
+      <span className={className}>
+        {tokens.map((token, idx) => {
+          // Se for palavra (contém caracteres alfanuméricos)
+          const isWord = /[a-zA-Z0-9]/.test(token);
+
+          if (!isWord) {
+            return <span key={idx}>{token}</span>;
+          }
+
+          const cleanWord = token.replace(/[^\w]/g, '').toLowerCase();
+
+          return (
+            <span
+              key={idx}
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(`https://dictionary.cambridge.org/dictionary/english-portuguese/${cleanWord}`, '_blank', 'noopener,noreferrer');
+              }}
+              title={`Consultar "${token}" no Cambridge Dictionary`}
+              className="inline-block cursor-pointer underline-offset-4 decoration-dotted hover:underline hover:decoration-solid hover:decoration-emerald-400 hover:text-emerald-300 transition-colors duration-150 active:scale-95"
+            >
+              {token}
+            </span>
+          );
+        })}
+      </span>
+    );
+  };
+
   return (
     <div className={`w-full max-w-2xl bg-[#131b2e] rounded-2xl sm:rounded-3xl border border-[#1f2b45] p-4 sm:p-8 relative transition-all duration-300 ${isRevealed ? 'card-glow-active' : 'card-glow'}`}>
       
@@ -104,7 +145,10 @@ export default function Flashcard({
         {/* Primary Prompt Text with Copy Button */}
         <div className="relative group inline-flex items-center justify-center gap-2">
           <h2 className="text-lg sm:text-2xl font-bold text-white tracking-tight leading-relaxed select-text break-words">
-            {isActiveMode ? phrase.native : phrase.target}
+            {isActiveMode 
+              ? phrase.native 
+              : renderInteractiveEnglishText(phrase.target)
+            }
           </h2>
           <button
             onClick={handleCopyPrompt}
@@ -146,7 +190,10 @@ export default function Flashcard({
             
             <div className="relative group inline-flex items-center justify-center gap-2">
               <h3 className="text-base sm:text-xl font-semibold text-slate-100 leading-snug select-text break-words">
-                {isActiveMode || isSRSMode ? phrase.target : phrase.native}
+                {isActiveMode || isSRSMode 
+                  ? renderInteractiveEnglishText(phrase.target) 
+                  : phrase.native
+                }
               </h3>
               <button
                 onClick={handleCopyRevealed}

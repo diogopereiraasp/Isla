@@ -59,24 +59,8 @@ export default function Header({
         {/* Right Section: Mode Selector & Buttons */}
         <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end overflow-x-auto pb-1 sm:pb-0">
           
-          {/* Mode Switcher: 1. Repetição / Revisão | 2. Aprender | 3. Recordação Ativa */}
+          {/* Mode Switcher: 1. Aprender | 2. Recordação Ativa | 3. Repetição */}
           <div className="bg-[#131b2e] p-1 rounded-xl border border-[#1f2b45] flex items-center text-xs font-semibold shrink-0">
-            <button
-              onClick={() => setMode('srs')}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                mode === 'srs'
-                  ? 'bg-slate-800 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <span>Repetição</span>
-              {dueTodayCount > 0 && (
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${mode === 'srs' ? 'bg-[#00c57c]/20 text-[#00c57c]' : 'bg-amber-500/20 text-amber-400'}`}>
-                  {dueTodayCount}
-                </span>
-              )}
-            </button>
-
             <button
               onClick={() => setMode('learn')}
               className={`px-3 py-1.5 rounded-lg transition-all ${
@@ -97,6 +81,22 @@ export default function Header({
               }`}
             >
               Recordação Ativa
+            </button>
+
+            <button
+              onClick={() => setMode('srs')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                mode === 'srs'
+                  ? 'bg-slate-800 text-white shadow'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span>Repetição</span>
+              {dueTodayCount > 0 && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${mode === 'srs' ? 'bg-[#00c57c]/20 text-[#00c57c]' : 'bg-amber-500/20 text-amber-400'}`}>
+                  {dueTodayCount}
+                </span>
+              )}
             </button>
           </div>
 

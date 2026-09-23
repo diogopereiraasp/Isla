@@ -174,27 +174,26 @@ export default function Flashcard({
             <span>{isLearnMode ? "Ver Tradução" : "Revelar Resposta"}</span>
           </button>
         ) : (
-          <div>
-            {/* Feedback / Review actions */}
-            {isSRSMode ? (
-              <SRSFeedbackButtons onFeedback={onFeedback} simplified={false} />
-            ) : isActiveMode ? (
-              <SRSFeedbackButtons onFeedback={onFeedback} simplified={true} />
-            ) : (
-              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+          <div className="space-y-3">
+            {/* Rating Buttons with numeric shortcuts (1, 2, 3, 4) */}
+            <SRSFeedbackButtons onFeedback={onFeedback} simplified={false} />
+
+            {/* Navigation buttons for Aprender mode */}
+            {isLearnMode && (
+              <div className="flex items-center justify-between gap-2 pt-1">
                 <button
                   onClick={onPrev}
-                  className="py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold rounded-xl transition flex items-center justify-center gap-1.5 border border-slate-700/60 active:scale-95"
+                  className="py-2 px-3 text-slate-400 hover:text-slate-200 text-xs font-medium rounded-xl transition flex items-center gap-1 hover:bg-slate-800/60"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Anterior</span>
                 </button>
                 <button
                   onClick={onNext}
-                  className="py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold rounded-xl transition flex items-center justify-center gap-1.5 border border-slate-700/60 active:scale-95"
+                  className="py-2 px-3 text-slate-400 hover:text-slate-200 text-xs font-medium rounded-xl transition flex items-center gap-1 hover:bg-slate-800/60"
                 >
-                  <span>Próxima</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>Pular</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}

@@ -19,8 +19,8 @@ export default function PhraseManagerModal({
   const filtered = phrases.filter(p => {
     const cardTags = p.tags || [];
     const matchesSearch = 
-      p.native.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.target.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.target && p.target.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (p.native && p.native.toLowerCase().includes(searchTerm.toLowerCase())) ||
       cardTags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesTag = selectedTag === 'all' || cardTags.includes(selectedTag);
@@ -41,7 +41,7 @@ export default function PhraseManagerModal({
               </span>
             </h3>
             <p className="text-xs text-slate-400">
-              Gerencie seus cards, tags do Anki e áudios
+              Gerencie seus cards, tags e áudios
             </p>
           </div>
           <button
@@ -58,7 +58,7 @@ export default function PhraseManagerModal({
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Buscar por português, inglês ou tag..."
+              placeholder="Buscar por frente, verso ou tag..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-[#0a0f1d] border border-[#1f2b45] rounded-xl pl-9 pr-3.5 py-2 text-slate-200 placeholder-slate-500 focus:border-[#00c57c] focus:outline-none text-xs"
@@ -82,7 +82,7 @@ export default function PhraseManagerModal({
         <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs">
           {filtered.length === 0 ? (
             <div className="py-12 text-center text-slate-500">
-              Nenhum card cadastrado ou encontrado com os filtros atuais.
+              Nenhum card encontrado com os filtros atuais.
             </div>
           ) : (
             filtered.map((phrase) => (
@@ -109,7 +109,7 @@ export default function PhraseManagerModal({
                       </span>
                     ) : (
                       <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                        <Volume2 className="w-3 h-3" /> Voz Nativa
+                        <Volume2 className="w-3 h-3" /> Voz do Sistema
                       </span>
                     )}
                     
@@ -119,8 +119,8 @@ export default function PhraseManagerModal({
                       </span>
                     )}
                   </div>
-                  <p className="font-semibold text-slate-200 truncate">{phrase.native}</p>
-                  <p className="text-slate-400 text-[11px] truncate">{phrase.target}</p>
+                  <p className="font-semibold text-slate-200 truncate">{phrase.target}</p>
+                  <p className="text-slate-400 text-[11px] truncate">{phrase.native}</p>
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">

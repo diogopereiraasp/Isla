@@ -9,8 +9,8 @@ export default function AddPhraseModal({
   editingPhrase = null,
   existingTags = []
 }) {
-  const [native, setNative] = useState('');
-  const [target, setTarget] = useState('');
+  const [target, setTarget] = useState(''); // Frente (Front)
+  const [native, setNative] = useState(''); // Verso (Back)
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [audioBlob, setAudioBlob] = useState(null);
@@ -20,14 +20,14 @@ export default function AddPhraseModal({
   // Pre-fill on open/edit
   React.useEffect(() => {
     if (editingPhrase) {
-      setNative(editingPhrase.native || '');
       setTarget(editingPhrase.target || '');
+      setNative(editingPhrase.native || '');
       setTags(Array.isArray(editingPhrase.tags) ? editingPhrase.tags : []);
       setAudioBlob(editingPhrase.audioBlob || null);
       setFileName(editingPhrase.audioBlob ? 'Áudio Existente' : '');
     } else {
-      setNative('');
       setTarget('');
+      setNative('');
       setTags([]);
       setTagInput('');
       setAudioBlob(null);
@@ -82,9 +82,8 @@ export default function AddPhraseModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!native.trim() || !target.trim()) return;
+    if (!target.trim() || !native.trim()) return;
 
-    // If user left some tag in input, add it before saving
     let finalTags = [...tags];
     if (tagInput.trim()) {
       const formatted = tagInput.trim().toLowerCase().replace(/\s+/g, '_');
@@ -95,8 +94,8 @@ export default function AddPhraseModal({
 
     onSave({
       id: editingPhrase?.id,
-      native: native.trim(),
       target: target.trim(),
+      native: native.trim(),
       tags: finalTags,
       audioBlob
     });
@@ -126,32 +125,32 @@ export default function AddPhraseModal({
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           
-          {/* Front / Native prompt */}
+          {/* Frente (Front) */}
           <div>
             <label className="block font-semibold text-slate-300 mb-1.5">
-              Frase em Português <span className="text-slate-500 font-normal">(Gatilho mental / Back)</span>
-            </label>
-            <textarea
-              required
-              rows={2}
-              value={native}
-              onChange={(e) => setNative(e.target.value)}
-              placeholder="Ex: Eu costumo tomar café puro todas as manhãs."
-              className="w-full bg-[#0a0f1d] border border-[#1f2b45] rounded-2xl p-3 text-slate-100 placeholder-slate-500 focus:border-[#00c57c] focus:ring-1 focus:ring-[#00c57c] focus:outline-none text-xs transition"
-            />
-          </div>
-
-          {/* Target phrase (English / Front) */}
-          <div>
-            <label className="block font-semibold text-slate-300 mb-1.5">
-              Frase no Idioma Alvo <span className="text-slate-500 font-normal">(Inglês / Front)</span>
+              Frente <span className="text-slate-500 font-normal">(Front)</span>
             </label>
             <textarea
               required
               rows={2}
               value={target}
               onChange={(e) => setTarget(e.target.value)}
-              placeholder="Ex: I usually drink black coffee every morning."
+              placeholder="Ex: was daring enough to take the King's challenge."
+              className="w-full bg-[#0a0f1d] border border-[#1f2b45] rounded-2xl p-3 text-slate-100 placeholder-slate-500 focus:border-[#00c57c] focus:ring-1 focus:ring-[#00c57c] focus:outline-none text-xs transition"
+            />
+          </div>
+
+          {/* Verso (Back) */}
+          <div>
+            <label className="block font-semibold text-slate-300 mb-1.5">
+              Verso <span className="text-slate-500 font-normal">(Back)</span>
+            </label>
+            <textarea
+              required
+              rows={2}
+              value={native}
+              onChange={(e) => setNative(e.target.value)}
+              placeholder="Ex: fosse ousado o suficiente para aceitar o desafio do Rei."
               className="w-full bg-[#0a0f1d] border border-[#1f2b45] rounded-2xl p-3 text-slate-100 placeholder-slate-500 focus:border-[#00c57c] focus:ring-1 focus:ring-[#00c57c] focus:outline-none text-xs transition"
             />
           </div>
@@ -159,7 +158,7 @@ export default function AddPhraseModal({
           {/* Anki-style Tags section */}
           <div className="space-y-2">
             <label className="block font-semibold text-slate-300">
-              Tags / Ilhas <span className="text-slate-500 font-normal">(estilo Anki, ex: the_endless_tale, rotina, trabalho)</span>
+              Tags <span className="text-slate-500 font-normal">(ex: the_endless_tale, rotina, capitulo_1)</span>
             </label>
             
             {/* Tag Input Field */}
@@ -185,10 +184,10 @@ export default function AddPhraseModal({
               </button>
             </div>
 
-            {/* Current Tags Chips matching Anki screenshot style */}
+            {/* Current Tags Chips */}
             <div className="min-h-[38px] p-2 bg-[#0a0f1d] border border-[#1f2b45] rounded-xl flex items-center gap-1.5 flex-wrap">
               {tags.length === 0 ? (
-                <span className="text-slate-600 text-[11px] px-1">Nenhuma tag adicionada (ficará sem categoria)</span>
+                <span className="text-slate-600 text-[11px] px-1">Nenhuma tag adicionada</span>
               ) : (
                 tags.map((tag) => (
                   <span
@@ -213,7 +212,7 @@ export default function AddPhraseModal({
             {/* Quick Sugestões de Tags Existentes */}
             {existingTags.length > 0 && (
               <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[11px]">
-                <span className="text-slate-500">Tags sugeridas:</span>
+                <span className="text-slate-500">Tags existentes:</span>
                 {existingTags.map(tag => (
                   <button
                     key={tag}
@@ -232,7 +231,7 @@ export default function AddPhraseModal({
           <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between">
               <label className="font-semibold text-slate-300">
-                Áudio de Pronúncia <span className="text-slate-500 font-normal">(Opcional)</span>
+                Áudio do Card <span className="text-slate-500 font-normal">(Opcional)</span>
               </label>
               
               <div className="flex items-center bg-[#0a0f1d] p-0.5 rounded-lg border border-[#1f2b45] text-[11px]">

@@ -263,6 +263,7 @@ export default function App() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImport={importPhrasesBatch}
+        existingPhrases={phrases}
       />
 
     </div>

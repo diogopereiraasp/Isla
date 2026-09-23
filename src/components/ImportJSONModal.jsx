@@ -15,7 +15,7 @@ const EXAMPLE_JSON = [
   }
 ];
 
-export default function ImportJSONModal({ isOpen, onClose, onImport }) {
+export default function ImportJSONModal({ isOpen, onClose, onImport, existingPhrases = [] }) {
   const [jsonText, setJsonText] = useState('');
   const [audioFilesMap, setAudioFilesMap] = useState({});
   const [generateWithElevenLabs, setGenerateWithElevenLabs] = useState(true);
@@ -95,16 +95,39 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
       setProgressTotal(cardsArray.length);
       setProgressCurrent(0);
 
+      const cleanSoundTag = (str) => String(str || '').replace(/\[sound:[^\]]+\]/gi, '').trim();
+      const normalize = (str) => cleanSoundTag(str)
+        .toLowerCase()
+        .replace(/[.,/#!$%^&*;:{}=\-_`~()?'"]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const existingKeys = new Set(
+        existingPhrases.map(p => `${normalize(p.target)}|||${normalize(p.native)}`)
+      );
+      const seenBatchKeys = new Set();
+
       // Process and generate audio for each card if option enabled
       for (let i = 0; i < cardsArray.length; i++) {
         const card = cardsArray[i];
         setProgressCurrent(i + 1);
 
+        const rawTarget = card.target || card.frente || card.front || '';
+        const rawNative = card.native || card.verso || card.back || '';
+        const normKey = `${normalize(rawTarget)}|||${normalize(rawNative)}`;
+
+        // Se o card já existe ou é duplicata dentro do próprio lote, pula sem gastar ElevenLabs
+        if (existingKeys.has(normKey) || seenBatchKeys.has(normKey)) {
+          setProgressText(`Ignorando duplicata ${i + 1}/${cardsArray.length}...`);
+          continue;
+        }
+        seenBatchKeys.add(normKey);
+
         const audioKey = (card.audio || card.sound || '').toLowerCase().trim();
         const hasManualAudio = !!audioFilesMap[audioKey] || !!card.audioBlob;
 
         if (generateWithElevenLabs && !hasManualAudio) {
-          const textToSpeak = (card.target || card.frente || card.front || '').replace(/\[sound:[^\]]+\]/gi, '').trim();
+          const textToSpeak = cleanSoundTag(rawTarget);
           
           if (textToSpeak) {
             setProgressText(`Gerando áudio IA ${i + 1}/${cardsArray.length}: "${textToSpeak.slice(0, 30)}..."`);

@@ -39,12 +39,43 @@ export function usePhrases() {
       return String(str).replace(/\[sound:[^\]]+\]/gi, '').trim();
     };
 
-    const formattedList = cardsArray.map((card, idx) => {
+    const normalizeText = (str) => {
+      return cleanSoundTag(str)
+        .toLowerCase()
+        .replace(/[.,/#!$%^&*;:{}=\-_`~()?'"]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
+    // Criar conjunto de chaves únicas dos cards já existentes no projeto
+    const existingKeys = new Set(
+      phrases.map(p => `${normalizeText(p.target)}|||${normalizeText(p.native)}`)
+    );
+
+    // Conjunto para evitar duplicatas dentro do próprio lote que está sendo importado
+    const batchKeys = new Set();
+
+    const formattedList = [];
+
+    for (let idx = 0; idx < cardsArray.length; idx++) {
+      const card = cardsArray[idx];
       const rawTarget = card.target || card.frente || card.front || '';
       const rawNative = card.native || card.verso || card.back || '';
 
       const target = cleanSoundTag(rawTarget);
       const native = cleanSoundTag(rawNative);
+
+      if (!target || !native) continue;
+
+      const normTarget = normalizeText(target);
+      const normNative = normalizeText(native);
+      const cardKey = `${normTarget}|||${normNative}`;
+
+      // Se já existe no projeto ou já foi adicionado neste lote, ignora para não duplicar
+      if (existingKeys.has(cardKey) || batchKeys.has(cardKey)) {
+        continue;
+      }
+      batchKeys.add(cardKey);
 
       const tags = Array.isArray(card.tags)
         ? card.tags.map(t => String(t).trim().toLowerCase().replace(/\s+/g, '_')).filter(Boolean)
@@ -52,7 +83,6 @@ export function usePhrases() {
 
       // Check audio filename match if audioFilesMap was provided
       let audioKey = (card.audio || card.audioName || card.sound || '').toLowerCase().trim();
-      // Extract from [sound:...] if present in raw text
       const soundMatch = String(rawTarget).match(/\[sound:([^\]]+)\]/i);
       if (soundMatch && !audioKey) {
         audioKey = soundMatch[1].toLowerCase().trim();
@@ -63,7 +93,7 @@ export function usePhrases() {
         matchedAudioBlob = audioFilesMap[audioKey];
       }
 
-      return {
+      formattedList.push({
         id: card.id || (now + idx),
         target,
         native,
@@ -76,11 +106,13 @@ export function usePhrases() {
         dueDate: card.dueDate || new Date().toISOString(),
         lastReviewed: card.lastReviewed || null,
         history: card.history || []
-      };
-    }).filter(c => c.target && c.native);
+      });
+    }
 
-    await importManyPhrases(formattedList);
-    await loadPhrases();
+    if (formattedList.length > 0) {
+      await importManyPhrases(formattedList);
+      await loadPhrases();
+    }
     return formattedList.length;
   };
 

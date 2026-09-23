@@ -133,11 +133,6 @@ export default function Flashcard({
       {/* Main Content Area */}
       <div className="min-h-[140px] sm:min-h-[180px] flex flex-col justify-center text-center px-1 sm:px-4">
         
-        {/* Top Prompt Instruction */}
-        <p className="text-[10px] sm:text-xs font-bold tracking-widest uppercase text-slate-400 mb-2 sm:mb-3 flex items-center justify-center gap-1.5">
-          {isLearnMode ? "OUÇA E REPITA:" : "TRADUZA EM VOZ ALTA:"}
-        </p>
-
         {/* Primary Prompt Text with Copy Button */}
         <div className="relative group inline-flex items-center justify-center gap-2">
           <h2 className="text-lg sm:text-2xl font-bold text-white tracking-tight leading-relaxed select-text break-words">
@@ -180,13 +175,9 @@ export default function Flashcard({
         {/* Revealed Section */}
         {isRevealed && (
           <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[#1f2b45] transition-all animate-fadeIn">
-            <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#00c57c] mb-1">
-              {isActiveMode || isSRSMode ? "RESPOSTA & SHADOWING:" : "TRADUÇÃO:"}
-            </p>
-            
             <div className="relative group inline-flex items-center justify-center gap-2">
               <h3 className="text-base sm:text-xl font-semibold text-slate-100 leading-snug select-text break-words">
-                {isActiveMode || isSRSMode 
+                {isActiveMode 
                   ? renderInteractiveEnglishText(phrase.target) 
                   : phrase.native
                 }
@@ -206,7 +197,7 @@ export default function Flashcard({
 
             {/* Audio Button & YouGlish on Reveal */}
             <div className="mt-3 sm:mt-3.5 flex items-center justify-center gap-2 flex-wrap">
-              {(isActiveMode || isSRSMode) && (
+              {isActiveMode && (
                 <AudioPlayerButton phrase={phrase} />
               )}
               <a
@@ -236,7 +227,7 @@ export default function Flashcard({
             className="w-full py-3 sm:py-3.5 bg-[#1b263b] hover:bg-[#23324d] active:scale-[0.98] text-slate-200 font-semibold text-xs sm:text-sm rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 border border-slate-700/60 shadow-lg shadow-black/30"
           >
             <Eye className="w-4 h-4 text-[#00c57c]" />
-            <span>{isLearnMode ? "Ver Tradução" : "Revelar Resposta"}</span>
+            <span>Ver Resultado</span>
           </button>
         ) : (
           <div className="space-y-3">

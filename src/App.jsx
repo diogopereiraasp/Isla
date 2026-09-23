@@ -205,7 +205,7 @@ export default function App() {
             <div className="mt-5 flex items-center justify-center flex-wrap gap-4 text-[11px] text-slate-500">
               <span className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-300 font-mono">Espaço</kbd>
-                <span>{isRevealed ? "Tocar Áudio" : "Revelar Resposta"}</span>
+                <span>{isRevealed ? "Tocar Áudio" : "Ver Resultado"}</span>
               </span>
               <span className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-300 font-mono">← / →</kbd>

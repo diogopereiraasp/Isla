@@ -291,6 +291,14 @@ export default function AddPhraseModal({
               <div className="flex items-center bg-[#0a0f1d] p-0.5 rounded-lg border border-[#1f2b45] text-[11px]">
                 <button
                   type="button"
+                  onClick={() => setAudioMode('elevenlabs')}
+                  className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${audioMode === 'elevenlabs' ? 'bg-[#00c57c]/20 text-[#00c57c] font-semibold border border-emerald-500/30' : 'text-slate-400'}`}
+                >
+                  <Wand2 className="w-3 h-3" />
+                  <span>ElevenLabs</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setAudioMode('upload')}
                   className={`px-2.5 py-1 rounded-md transition ${audioMode === 'upload' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400'}`}
                 >
@@ -349,8 +357,42 @@ export default function AddPhraseModal({
               </div>
             ) : null}
 
-            {/* Upload or Record Area */}
-            {audioMode === 'upload' ? (
+            {/* ElevenLabs / Upload / Record Area */}
+            {audioMode === 'elevenlabs' ? (
+              <div className="p-3.5 bg-slate-900/90 border border-slate-800 rounded-xl sm:rounded-2xl space-y-3">
+                <div className="space-y-1.5">
+                  <label className="block text-slate-300 font-medium text-xs">Selecione a Voz:</label>
+                  <select
+                    value={selectedVoice}
+                    onChange={(e) => setSelectedVoice(e.target.value)}
+                    className="w-full bg-[#0a0f1d] border border-[#1f2b45] rounded-xl px-3 py-2 text-slate-200 focus:border-[#00c57c] focus:outline-none text-xs"
+                  >
+                    {DEFAULT_ELEVENLABS_VOICES.map(v => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGenerateElevenLabs}
+                  disabled={isGeneratingEleven || !target.trim()}
+                  className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-[#00c57c] hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition disabled:opacity-50 active:scale-95"
+                >
+                  {isGeneratingEleven ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Gerando áudio com ElevenLabs...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-4 h-4" />
+                      <span>Gerar Áudio da Frase (Frente)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : audioMode === 'upload' ? (
               <div className="border border-dashed border-slate-700 hover:border-slate-500 rounded-xl sm:rounded-2xl p-3.5 text-center bg-[#0a0f1d]/70 cursor-pointer relative transition">
                 <input
                   type="file"

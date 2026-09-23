@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Tag, Plus, Trash2, Upload } from 'lucide-react';
+import { X, Tag, Plus, Trash2, Upload, Sparkles, Loader2, Volume2 } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
+import { generateTTSAudioBlob } from '../services/audioService';
 
 export default function AddPhraseModal({
   isOpen,
@@ -15,7 +16,8 @@ export default function AddPhraseModal({
   const [tagInput, setTagInput] = useState('');
   const [audioBlob, setAudioBlob] = useState(null);
   const [fileName, setFileName] = useState('');
-  const [audioMode, setAudioMode] = useState('upload'); // 'upload' | 'record'
+  const [audioMode, setAudioMode] = useState('upload'); // 'upload' | 'record' | 'generate'
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
 
   // Pre-fill on open/edit
   React.useEffect(() => {
@@ -80,6 +82,29 @@ export default function AddPhraseModal({
     }
   };
 
+  const handleGenerateAI = async () => {
+    if (!target.trim()) {
+      alert("Digite a frase na Frente antes de gerar o áudio.");
+      return;
+    }
+
+    try {
+      setIsGeneratingAudio(true);
+      const blob = await generateTTSAudioBlob(target.trim(), 'en');
+      setAudioBlob(blob);
+      setFileName(`Áudio Nativo Gerado (${Math.round(blob.size / 1024)} KB)`);
+      
+      // Play quick preview
+      const previewUrl = URL.createObjectURL(blob);
+      new Audio(previewUrl).play();
+    } catch (err) {
+      console.error(err);
+      alert("Não foi possível baixar o MP3 no momento, usaremos a voz do sistema offline.");
+    } finally {
+      setIsGeneratingAudio(false);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!target.trim() || !native.trim()) return;
@@ -105,7 +130,7 @@ export default function AddPhraseModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-[#131b2e] border border-[#1f2b45] rounded-t-3xl sm:rounded-3xl w-full max-w-lg p-5 sm:p-7 shadow-2xl space-y-4 max-h-[90vh] sm:max-h-[92vh] overflow-y-auto animate-slideUp sm:animate-none">
+      <div className="bg-[#131b2e] border border-[#1f2b45] rounded-t-3xl sm:rounded-3xl w-full max-w-lg p-5 sm:p-7 shadow-2xl space-y-4 max-h-[90vh] sm:max-h-[92vh] overflow-y-auto">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[#1f2b45]">
@@ -127,9 +152,24 @@ export default function AddPhraseModal({
           
           {/* Frente */}
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">
-              Frente
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="font-semibold text-slate-300">
+                Frente
+              </label>
+              <button
+                type="button"
+                onClick={handleGenerateAI}
+                disabled={isGeneratingAudio || !target.trim()}
+                className="text-[11px] text-[#00c57c] hover:text-emerald-300 flex items-center gap-1 font-semibold disabled:opacity-40 transition"
+              >
+                {isGeneratingAudio ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                <span>{isGeneratingAudio ? 'Gerando...' : '⚡ Gerar Áudio Nativo'}</span>
+              </button>
+            </div>
             <textarea
               required
               rows={2}
@@ -250,6 +290,26 @@ export default function AddPhraseModal({
                 </button>
               </div>
             </div>
+
+            {/* Current Audio Status */}
+            {audioBlob && (
+              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between text-xs text-emerald-400">
+                <span className="flex items-center gap-1.5 font-medium truncate">
+                  <Volume2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{fileName || "Áudio anexado"}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAudioBlob(null);
+                    setFileName('');
+                  }}
+                  className="text-[11px] text-slate-400 hover:text-rose-400 underline shrink-0 ml-2"
+                >
+                  Remover
+                </button>
+              </div>
+            )}
 
             {audioMode === 'upload' ? (
               <div className="border border-dashed border-slate-700 hover:border-slate-500 rounded-xl sm:rounded-2xl p-3.5 text-center bg-[#0a0f1d]/70 cursor-pointer relative transition">

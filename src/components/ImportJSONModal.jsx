@@ -19,6 +19,8 @@ const EXAMPLE_JSON = [
 export default function ImportJSONModal({ isOpen, onClose, onImport }) {
   const [jsonText, setJsonText] = useState('');
   const [audioFilesMap, setAudioFilesMap] = useState({}); // { "filename.mp3": File }
+  const [autoGenerateAudio, setAutoGenerateAudio] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [successCount, setSuccessCount] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -61,6 +63,7 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
     }
 
     try {
+      setIsProcessing(true);
       const parsed = JSON.parse(jsonText);
       let cardsArray = [];
 
@@ -78,6 +81,25 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
         throw new Error("Nenhum card encontrado no JSON fornecido.");
       }
 
+      // If user enabled auto-generation, fetch TTS for items without audio file
+      if (autoGenerateAudio) {
+        const { generateTTSAudioBlob } = await import('../services/audioService');
+        for (let card of cardsArray) {
+          const audioKey = (card.audio || card.sound || '').toLowerCase().trim();
+          if (!audioFilesMap[audioKey] && !card.audioBlob) {
+            try {
+              const textToSpeak = card.target || card.frente || card.front;
+              if (textToSpeak) {
+                const blob = await generateTTSAudioBlob(textToSpeak, 'en');
+                card.audioBlob = blob;
+              }
+            } catch (ttsErr) {
+              console.warn("TTS fetch skip:", ttsErr);
+            }
+          }
+        }
+      }
+
       const imported = await onImport(cardsArray, audioFilesMap);
       setSuccessCount(imported);
       setTimeout(() => {
@@ -88,6 +110,8 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
       }, 1500);
     } catch (err) {
       setError(err.message || "Estrutura JSON inválida. Verifique a sintaxe.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -208,6 +232,28 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
             />
           </div>
 
+          {/* Auto-generate Audio Option */}
+          <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-2xl flex items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <span className="font-semibold text-slate-200 text-xs flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#00c57c]" />
+                <span>Gerar Áudio Automático (IA)</span>
+              </span>
+              <p className="text-[11px] text-slate-400">
+                Baixa e salva o áudio MP3 com pronúncia nativa para os cards que não possuem arquivo.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              <input
+                type="checkbox"
+                checked={autoGenerateAudio}
+                onChange={(e) => setAutoGenerateAudio(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#00c57c]"></div>
+            </label>
+          </div>
+
           {/* Feedback messages */}
           {error && (
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs flex items-center gap-2">
@@ -228,15 +274,18 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition font-medium"
+              disabled={isProcessing}
+              className="px-4 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition font-medium disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-950/40 transition active:scale-95"
+              disabled={isProcessing}
+              className="px-5 py-2.5 rounded-xl font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-950/40 transition active:scale-95 disabled:opacity-50 flex items-center gap-2"
             >
-              Importar Cards &amp; Áudios
+              {isProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>{isProcessing ? 'Importando e Gerando Áudios...' : 'Importar Cards & Áudios'}</span>
             </button>
           </div>
 

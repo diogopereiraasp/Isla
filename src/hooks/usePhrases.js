@@ -31,20 +31,27 @@ export function usePhrases() {
     }
   };
 
-  const importPhrasesBatch = async (cardsArray = []) => {
+  const importPhrasesBatch = async (cardsArray = [], audioFilesMap = {}) => {
     const now = Date.now();
     const formattedList = cardsArray.map((card, idx) => {
       const tags = Array.isArray(card.tags)
         ? card.tags.map(t => String(t).trim().toLowerCase().replace(/\s+/g, '_')).filter(Boolean)
         : (card.tag ? [String(card.tag).trim().toLowerCase().replace(/\s+/g, '_')] : []);
 
+      // Check audio filename match
+      const audioKey = (card.audio || card.audioName || card.sound || '').toLowerCase().trim();
+      let matchedAudioBlob = card.audioBlob || null;
+      if (audioKey && audioFilesMap[audioKey]) {
+        matchedAudioBlob = audioFilesMap[audioKey];
+      }
+
       return {
         id: card.id || (now + idx),
         target: card.target || card.frente || card.front || '',
         native: card.native || card.verso || card.back || '',
         tags,
-        hasAudio: !!card.audioBlob || !!card.hasAudio,
-        audioBlob: card.audioBlob || null,
+        hasAudio: !!matchedAudioBlob || !!card.hasAudio,
+        audioBlob: matchedAudioBlob,
         interval: card.interval || 1,
         repetitions: card.repetitions || 0,
         easeFactor: card.easeFactor || 2.5,

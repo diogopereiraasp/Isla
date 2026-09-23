@@ -6,6 +6,7 @@ import Flashcard from './components/Flashcard';
 import AddPhraseModal from './components/AddPhraseModal';
 import PhraseManagerModal from './components/PhraseManagerModal';
 import StatsModal from './components/StatsModal';
+import ImportJSONModal from './components/ImportJSONModal';
 import { usePhrases } from './hooks/usePhrases';
 import { getSRSStats } from './services/srs';
 import { playPhraseAudio } from './services/audioService';
@@ -22,7 +23,8 @@ export default function App() {
     allTags,
     addOrUpdatePhrase,
     removePhrase,
-    handleSRSFeedback
+    handleSRSFeedback,
+    importPhrasesBatch
   } = usePhrases();
 
   const [mode, setMode] = useState('learn'); // 'learn' | 'active' | 'srs'
@@ -31,6 +33,7 @@ export default function App() {
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isManagerOpen, setIsManagerOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [editingPhrase, setEditingPhrase] = useState(null);
@@ -148,6 +151,7 @@ export default function App() {
           setEditingPhrase(null);
           setIsAddModalOpen(true);
         }}
+        onOpenImport={() => setIsImportModalOpen(true)}
         onOpenManager={() => setIsManagerOpen(true)}
         onOpenStats={() => setIsStatsOpen(true)}
         installPrompt={!!deferredPrompt}
@@ -244,6 +248,12 @@ export default function App() {
         isOpen={isStatsOpen}
         onClose={() => setIsStatsOpen(false)}
         phrases={phrases}
+      />
+
+      <ImportJSONModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={importPhrasesBatch}
       />
 
     </div>

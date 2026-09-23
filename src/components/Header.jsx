@@ -1,8 +1,9 @@
 import React from 'react';
-import { Layers, Plus, BarChart3, Download } from 'lucide-react';
+import { Layers, Plus, BarChart3, Download, FileJson } from 'lucide-react';
 
 export default function Header({
   onOpenAdd,
+  onOpenImport,
   onOpenStats,
   mode,
   setMode,
@@ -25,7 +26,7 @@ export default function Header({
             </h1>
           </div>
 
-          {/* Mobile Right Controls: Install + Stats + Add */}
+          {/* Mobile Right Controls */}
           <div className="flex items-center gap-1.5 sm:hidden">
             {installPrompt && (
               <button
@@ -36,6 +37,13 @@ export default function Header({
                 <Download className="w-4 h-4" />
               </button>
             )}
+            <button
+              onClick={onOpenImport}
+              className="p-2 bg-slate-800 text-blue-400 rounded-xl border border-slate-700 active:scale-95"
+              title="Importar JSON"
+            >
+              <FileJson className="w-4 h-4" />
+            </button>
             <button
               onClick={onOpenStats}
               className="p-2 bg-slate-800 text-slate-300 rounded-xl border border-slate-700 active:scale-95"
@@ -56,7 +64,7 @@ export default function Header({
         {/* Mode Selector & Desktop Action Buttons */}
         <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-end">
           
-          {/* Mode Switcher */}
+          {/* Mode Switcher: 1. Aprender | 2. Recordação Ativa | 3. Repetição */}
           <div className="bg-[#131b2e] p-1 rounded-xl border border-[#1f2b45] flex items-center text-xs font-semibold w-full sm:w-auto justify-between sm:justify-start">
             <button
               onClick={() => setMode('learn')}
@@ -109,6 +117,15 @@ export default function Header({
                 <span>Instalar</span>
               </button>
             )}
+
+            <button
+              onClick={onOpenImport}
+              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition active:scale-95"
+              title="Importar vários cards via JSON"
+            >
+              <FileJson className="w-3.5 h-3.5 text-blue-400" />
+              <span>Importar JSON</span>
+            </button>
 
             <button
               onClick={onOpenStats}

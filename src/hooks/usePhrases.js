@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAllPhrases, savePhrase, deletePhrase } from '../services/db';
+import { getAllPhrases, savePhrase, deletePhrase, importManyPhrases } from '../services/db';
 import { calculateSRS, isCardDue } from '../services/srs';
 
 export function usePhrases() {
@@ -29,6 +29,34 @@ export function usePhrases() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const importPhrasesBatch = async (cardsArray = []) => {
+    const now = Date.now();
+    const formattedList = cardsArray.map((card, idx) => {
+      const tags = Array.isArray(card.tags)
+        ? card.tags.map(t => String(t).trim().toLowerCase().replace(/\s+/g, '_')).filter(Boolean)
+        : (card.tag ? [String(card.tag).trim().toLowerCase().replace(/\s+/g, '_')] : []);
+
+      return {
+        id: card.id || (now + idx),
+        target: card.target || card.frente || card.front || '',
+        native: card.native || card.verso || card.back || '',
+        tags,
+        hasAudio: !!card.audioBlob || !!card.hasAudio,
+        audioBlob: card.audioBlob || null,
+        interval: card.interval || 1,
+        repetitions: card.repetitions || 0,
+        easeFactor: card.easeFactor || 2.5,
+        dueDate: card.dueDate || new Date().toISOString(),
+        lastReviewed: card.lastReviewed || null,
+        history: card.history || []
+      };
+    }).filter(c => c.target && c.native);
+
+    await importManyPhrases(formattedList);
+    await loadPhrases();
+    return formattedList.length;
   };
 
   const addOrUpdatePhrase = async (phraseData) => {
@@ -99,6 +127,7 @@ export function usePhrases() {
     addOrUpdatePhrase,
     removePhrase,
     handleSRSFeedback,
+    importPhrasesBatch,
     refreshPhrases: loadPhrases
   };
 }

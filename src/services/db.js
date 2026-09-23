@@ -26,6 +26,16 @@ export async function savePhrase(phrase) {
   return phrase;
 }
 
+export async function importManyPhrases(newPhrases = []) {
+  const db = await getDB();
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  for (const phrase of newPhrases) {
+    await tx.store.put(phrase);
+  }
+  await tx.done;
+  return newPhrases;
+}
+
 export async function deletePhrase(id) {
   const db = await getDB();
   await db.delete(STORE_NAME, id);

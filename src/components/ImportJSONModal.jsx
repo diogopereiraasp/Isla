@@ -19,7 +19,7 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
   const [jsonText, setJsonText] = useState('');
   const [audioFilesMap, setAudioFilesMap] = useState({});
   const [generateWithElevenLabs, setGenerateWithElevenLabs] = useState(true);
-  const [selectedVoice, setSelectedVoice] = useState('Xb7hH8MSUJpSbSDYk0k2'); // Alice (Free plan compatible)
+  const [selectedVoice, setSelectedVoice] = useState('random'); // Sorteia aleatoriamente
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('isla_elevenlabs_key') || 'sk_14b2355cb1e6595503cd0e2f2b9a2996f2e97148084497c1');
   
   // Progress tracking

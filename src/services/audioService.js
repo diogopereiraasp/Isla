@@ -1,6 +1,7 @@
 let globalAudioInstance = null;
 
 export const DEFAULT_ELEVENLABS_VOICES = [
+  { id: 'random', name: '🎲 Aleatório (Sorteia uma voz por frase)' },
   { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice (Feminina, Clara & Natural)' },
   { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily (Feminina, Britânica Suave)' },
   { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George (Masculino, Caloroso)' },
@@ -10,16 +11,26 @@ export const DEFAULT_ELEVENLABS_VOICES = [
   { id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura (Feminina, Expressiva)' }
 ];
 
+export const AVAILABLE_VOICE_IDS = DEFAULT_ELEVENLABS_VOICES
+  .filter(v => v.id !== 'random')
+  .map(v => v.id);
+
+export function getRandomVoiceId() {
+  const index = Math.floor(Math.random() * AVAILABLE_VOICE_IDS.length);
+  return AVAILABLE_VOICE_IDS[index];
+}
+
 /**
  * Gera um Blob de áudio via API da ElevenLabs
  */
-export async function generateElevenLabsAudioBlob(text, apiKey = '', voiceId = 'Xb7hH8MSUJpSbSDYk0k2') {
+export async function generateElevenLabsAudioBlob(text, apiKey = '', voiceId = 'random') {
   if (!text || !text.trim()) throw new Error("Texto vazio para geração de áudio");
   
   const key = apiKey || localStorage.getItem('isla_elevenlabs_key') || 'sk_14b2355cb1e6595503cd0e2f2b9a2996f2e97148084497c1';
   const cleanText = text.replace(/\[sound:[^\]]+\]/gi, '').replace(/\.{2,}/g, '').trim();
 
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
+  const actualVoiceId = (voiceId === 'random' || !voiceId) ? getRandomVoiceId() : voiceId;
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${actualVoiceId}`;
   
   const response = await fetch(url, {
     method: 'POST',

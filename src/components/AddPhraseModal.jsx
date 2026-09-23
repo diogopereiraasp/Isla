@@ -106,7 +106,7 @@ export default function AddPhraseModal({
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-[#131b2e] border border-[#1f2b45] rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[#1f2b45]">
           <h3 className="font-bold text-base sm:text-lg text-white flex items-center gap-2.5">
@@ -124,33 +124,33 @@ export default function AddPhraseModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          
-          {/* Frente (Front) */}
+
+          {/* Frente */}
           <div>
             <label className="block font-semibold text-slate-300 mb-1.5">
-              Frente <span className="text-slate-500 font-normal">(Front)</span>
+              Frente
             </label>
             <textarea
               required
               rows={2}
               value={target}
               onChange={(e) => setTarget(e.target.value)}
-              placeholder="Ex: was daring enough to take the King's challenge."
+              placeholder="O que você vê primeiro para testar sua memória (ex: frase em inglês ou pergunta). Ex: was daring enough to take the King's challenge."
               className="w-full bg-[#0a0f1d] border border-[#1f2b45] rounded-2xl p-3 text-slate-100 placeholder-slate-500 focus:border-[#00c57c] focus:ring-1 focus:ring-[#00c57c] focus:outline-none text-xs transition"
             />
           </div>
 
-          {/* Verso (Back) */}
+          {/* Verso */}
           <div>
             <label className="block font-semibold text-slate-300 mb-1.5">
-              Verso <span className="text-slate-500 font-normal">(Back)</span>
+              Verso
             </label>
             <textarea
               required
               rows={2}
               value={native}
               onChange={(e) => setNative(e.target.value)}
-              placeholder="Ex: fosse ousado o suficiente para aceitar o desafio do Rei."
+              placeholder="A resposta ou tradução revelada ao virar o card. Ex: fosse ousado o suficiente para aceitar o desafio do Rei."
               className="w-full bg-[#0a0f1d] border border-[#1f2b45] rounded-2xl p-3 text-slate-100 placeholder-slate-500 focus:border-[#00c57c] focus:ring-1 focus:ring-[#00c57c] focus:outline-none text-xs transition"
             />
           </div>
@@ -158,9 +158,9 @@ export default function AddPhraseModal({
           {/* Anki-style Tags section */}
           <div className="space-y-2">
             <label className="block font-semibold text-slate-300">
-              Tags <span className="text-slate-500 font-normal">(ex: the_endless_tale, rotina, capitulo_1)</span>
+              Tags
             </label>
-            
+
             {/* Tag Input Field */}
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -233,7 +233,7 @@ export default function AddPhraseModal({
               <label className="font-semibold text-slate-300">
                 Áudio do Card <span className="text-slate-500 font-normal">(Opcional)</span>
               </label>
-              
+
               <div className="flex items-center bg-[#0a0f1d] p-0.5 rounded-lg border border-[#1f2b45] text-[11px]">
                 <button
                   type="button"

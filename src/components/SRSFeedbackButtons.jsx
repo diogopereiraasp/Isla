@@ -33,7 +33,7 @@ export default function SRSFeedbackButtons({ onFeedback, simplified = false }) {
           <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
           <span className="font-semibold text-xs">Errei</span>
         </div>
-        <span className="text-[10px] text-rose-400/80">Hoje (1d)</span>
+        <span className="text-[10px] text-rose-400/80">&lt; 10 min</span>
       </button>
 
       <button
@@ -44,7 +44,7 @@ export default function SRSFeedbackButtons({ onFeedback, simplified = false }) {
           <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
           <span className="font-semibold text-xs">Difícil</span>
         </div>
-        <span className="text-[10px] text-amber-400/80">Hesitei</span>
+        <span className="text-[10px] text-amber-400/80">4 horas</span>
       </button>
 
       <button
@@ -55,7 +55,7 @@ export default function SRSFeedbackButtons({ onFeedback, simplified = false }) {
           <Check className="w-3.5 h-3.5 text-blue-400" />
           <span className="font-semibold text-xs">Bom</span>
         </div>
-        <span className="text-[10px] text-blue-400/80">Lembrei bem</span>
+        <span className="text-[10px] text-blue-400/80">1d ➔ 5d</span>
       </button>
 
       <button
@@ -66,7 +66,7 @@ export default function SRSFeedbackButtons({ onFeedback, simplified = false }) {
           <Zap className="w-3.5 h-3.5 text-[#00c57c]" />
           <span className="font-semibold text-xs">Fácil</span>
         </div>
-        <span className="text-[10px] text-emerald-400/80">Automático</span>
+        <span className="text-[10px] text-emerald-400/80">3d ➔ 7d</span>
       </button>
     </div>
   );

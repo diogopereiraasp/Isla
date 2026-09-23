@@ -1,17 +1,19 @@
 let globalAudioInstance = null;
 
 export const DEFAULT_ELEVENLABS_VOICES = [
-  { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel (Americana, Calma & Natural)' },
-  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella (Americana, Expressiva)' },
-  { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni (Americano, Masculino Jovem)' },
-  { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh (Americano, Profundo)' },
-  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel (Britânico, Noticiário)' }
+  { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice (Feminina, Clara & Natural)' },
+  { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily (Feminina, Britânica Suave)' },
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George (Masculino, Caloroso)' },
+  { id: 'nPczCjzI2devNBz1zQrb', name: 'Brian (Masculino, Profundo & Claro)' },
+  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel (Masculino, Britânico)' },
+  { id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam (Masculino, Jovem)' },
+  { id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura (Feminina, Expressiva)' }
 ];
 
 /**
  * Gera um Blob de áudio via API da ElevenLabs
  */
-export async function generateElevenLabsAudioBlob(text, apiKey = '', voiceId = '21m00Tcm4TlvDq8ikWAM') {
+export async function generateElevenLabsAudioBlob(text, apiKey = '', voiceId = 'Xb7hH8MSUJpSbSDYk0k2') {
   if (!text || !text.trim()) throw new Error("Texto vazio para geração de áudio");
   
   const key = apiKey || localStorage.getItem('isla_elevenlabs_key') || 'sk_14b2355cb1e6595503cd0e2f2b9a2996f2e97148084497c1';

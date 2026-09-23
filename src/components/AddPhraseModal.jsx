@@ -18,7 +18,7 @@ export default function AddPhraseModal({
   const [fileName, setFileName] = useState('');
   const [audioMode, setAudioMode] = useState('upload'); // 'upload' | 'record'
   const [isGeneratingEleven, setIsGeneratingEleven] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('21m00Tcm4TlvDq8ikWAM'); // Rachel
+  const [selectedVoice, setSelectedVoice] = useState('Xb7hH8MSUJpSbSDYk0k2'); // Alice (Free plan compatible)
 
   // Pre-fill on open/edit
   React.useEffect(() => {

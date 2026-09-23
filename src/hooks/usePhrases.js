@@ -33,24 +33,42 @@ export function usePhrases() {
 
   const importPhrasesBatch = async (cardsArray = [], audioFilesMap = {}) => {
     const now = Date.now();
+    const cleanSoundTag = (str) => {
+      if (!str) return '';
+      // Remove tags estilo Anki: [sound:arquivo.mp3] ou [sound:33 was daring.mp3]
+      return String(str).replace(/\[sound:[^\]]+\]/gi, '').trim();
+    };
+
     const formattedList = cardsArray.map((card, idx) => {
+      const rawTarget = card.target || card.frente || card.front || '';
+      const rawNative = card.native || card.verso || card.back || '';
+
+      const target = cleanSoundTag(rawTarget);
+      const native = cleanSoundTag(rawNative);
+
       const tags = Array.isArray(card.tags)
         ? card.tags.map(t => String(t).trim().toLowerCase().replace(/\s+/g, '_')).filter(Boolean)
         : (card.tag ? [String(card.tag).trim().toLowerCase().replace(/\s+/g, '_')] : []);
 
-      // Check audio filename match
-      const audioKey = (card.audio || card.audioName || card.sound || '').toLowerCase().trim();
+      // Check audio filename match if audioFilesMap was provided
+      let audioKey = (card.audio || card.audioName || card.sound || '').toLowerCase().trim();
+      // Extract from [sound:...] if present in raw text
+      const soundMatch = String(rawTarget).match(/\[sound:([^\]]+)\]/i);
+      if (soundMatch && !audioKey) {
+        audioKey = soundMatch[1].toLowerCase().trim();
+      }
+
       let matchedAudioBlob = card.audioBlob || null;
-      if (audioKey && audioFilesMap[audioKey]) {
+      if (audioKey && audioFilesMap && audioFilesMap[audioKey]) {
         matchedAudioBlob = audioFilesMap[audioKey];
       }
 
       return {
         id: card.id || (now + idx),
-        target: card.target || card.frente || card.front || '',
-        native: card.native || card.verso || card.back || '',
+        target,
+        native,
         tags,
-        hasAudio: !!matchedAudioBlob || !!card.hasAudio,
+        hasAudio: !!matchedAudioBlob,
         audioBlob: matchedAudioBlob,
         interval: card.interval || 1,
         repetitions: card.repetitions || 0,

@@ -70,9 +70,9 @@ export default function Flashcard({
         </div>
 
         <span className="px-2.5 py-1 rounded-lg bg-[#182338] text-slate-300 border border-slate-700/60 text-[11px] font-medium tracking-wide">
+          {isSRSMode && "Repetição"}
+          {isLearnMode && "Aprender"}
           {isActiveMode && "Recordação Ativa"}
-          {isLearnMode && "Aprender (Flashcard)"}
-          {isSRSMode && "Revisão SRS"}
         </span>
       </div>
 

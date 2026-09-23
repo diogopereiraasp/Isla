@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, Plus, BarChart3, List, Download, Sparkles } from 'lucide-react';
+import { Layers, Plus, BarChart3, List, Download } from 'lucide-react';
 
 export default function Header({
   onOpenAdd,
@@ -22,15 +22,9 @@ export default function Header({
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-base sm:text-lg font-bold tracking-tight text-white leading-tight flex items-center gap-1.5">
-                <span>Isla</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-[#00c57c] border border-emerald-500/20 font-semibold">
-                  PWA
-                </span>
+              <h1 className="text-lg font-bold tracking-tight text-white leading-tight">
+                Isla
               </h1>
-              <p className="text-[11px] text-slate-400 font-normal">
-                Repetição espaçada &amp; áudio para automatizar o inglês
-              </p>
             </div>
           </div>
 
@@ -65,18 +59,24 @@ export default function Header({
         {/* Right Section: Mode Selector & Buttons */}
         <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end overflow-x-auto pb-1 sm:pb-0">
           
-          {/* Mode Switcher */}
+          {/* Mode Switcher: 1. Repetição / Revisão | 2. Aprender | 3. Recordação Ativa */}
           <div className="bg-[#131b2e] p-1 rounded-xl border border-[#1f2b45] flex items-center text-xs font-semibold shrink-0">
             <button
-              onClick={() => setMode('active')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                mode === 'active'
+              onClick={() => setMode('srs')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                mode === 'srs'
                   ? 'bg-slate-800 text-white shadow'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              Recordação Ativa
+              <span>Repetição</span>
+              {dueTodayCount > 0 && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${mode === 'srs' ? 'bg-[#00c57c]/20 text-[#00c57c]' : 'bg-amber-500/20 text-amber-400'}`}>
+                  {dueTodayCount}
+                </span>
+              )}
             </button>
+
             <button
               onClick={() => setMode('learn')}
               className={`px-3 py-1.5 rounded-lg transition-all ${
@@ -87,20 +87,16 @@ export default function Header({
             >
               Aprender
             </button>
+
             <button
-              onClick={() => setMode('srs')}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                mode === 'srs'
-                  ? 'bg-[#00c57c] text-white shadow'
+              onClick={() => setMode('active')}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                mode === 'active'
+                  ? 'bg-slate-800 text-white shadow'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <span>Revisão SRS</span>
-              {dueTodayCount > 0 && (
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${mode === 'srs' ? 'bg-black/30 text-white' : 'bg-amber-500/20 text-amber-400'}`}>
-                  {dueTodayCount}
-                </span>
-              )}
+              Recordação Ativa
             </button>
           </div>
 

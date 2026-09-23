@@ -51,30 +51,12 @@ export async function generateElevenLabsAudioBlob(text, apiKey = '', voiceId = '
 }
 
 /**
- * Fallback de geração pública TTS caso a chave falhe ou acabe a cota
+ * Reproduz exclusivamente o áudio gravado/gerado do card. Sem sintetizador de fala do sistema.
  */
-export async function generateTTSAudioBlob(text, lang = 'en') {
-  if (!text || !text.trim()) throw new Error("Texto vazio");
-
-  const cleanText = encodeURIComponent(text.replace(/\[sound:[^\]]+\]/gi, '').trim());
-  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${cleanText}&tl=${lang}&client=tw-ob`;
-
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("Falha ao buscar áudio TTS");
-    const blob = await res.blob();
-    return new Blob([blob], { type: 'audio/mp3' });
-  } catch (err) {
-    console.warn("Erro ao gerar áudio via API pública:", err);
-    throw err;
+export function playPhraseAudio(phrase) {
+  if (!phrase || !phrase.audioBlob) {
+    return Promise.resolve();
   }
-}
-
-/**
- * Reproduz o áudio do card (Blob local persistido no IndexedDB ou Web Speech fallback)
- */
-export function playPhraseAudio(phrase, options = { rate: 0.95, lang: 'en-US' }) {
-  if (!phrase) return Promise.reject(new Error("Nenhuma frase fornecida"));
 
   if (globalAudioInstance) {
     try {
@@ -83,71 +65,33 @@ export function playPhraseAudio(phrase, options = { rate: 0.95, lang: 'en-US' })
     } catch (_) {}
     globalAudioInstance = null;
   }
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-  }
 
-  // 1. If custom uploaded, recorded or ElevenLabs generated audio blob exists
-  if (phrase.audioBlob) {
-    return new Promise((resolve) => {
-      try {
-        const audioUrl = typeof phrase.audioBlob === 'string' 
-          ? phrase.audioBlob 
-          : URL.createObjectURL(phrase.audioBlob);
-
-        const audio = new Audio();
-        globalAudioInstance = audio;
-
-        audio.src = audioUrl;
-
-        audio.onended = () => {
-          resolve();
-        };
-
-        audio.onerror = (err) => {
-          console.warn("Erro ao tocar áudio blob, usando sintetizador fallback:", err);
-          speakText(phrase.target, options).then(resolve);
-        };
-
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((playErr) => {
-            console.warn("Autoplay bloqueado ou erro no play:", playErr);
-            speakText(phrase.target, options).then(resolve);
-          });
-        }
-      } catch (err) {
-        console.warn("Exception ao tocar áudio:", err);
-        speakText(phrase.target, options).then(resolve);
-      }
-    });
-  }
-
-  // 2. Fallback: Web Speech Synthesis API
-  return speakText(phrase.target, options);
-}
-
-export function speakText(text, options = { rate: 0.95, lang: 'en-US' }) {
   return new Promise((resolve) => {
-    if (!('speechSynthesis' in window)) {
+    try {
+      const audioUrl = typeof phrase.audioBlob === 'string' 
+        ? phrase.audioBlob 
+        : URL.createObjectURL(phrase.audioBlob);
+
+      const audio = new Audio();
+      globalAudioInstance = audio;
+      audio.src = audioUrl;
+
+      audio.onended = () => resolve();
+      audio.onerror = (err) => {
+        console.warn("Erro ao reproduzir arquivo de áudio:", err);
+        resolve();
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((playErr) => {
+          console.warn("Autoplay bloqueado:", playErr);
+          resolve();
+        });
+      }
+    } catch (err) {
+      console.warn("Exception ao tocar áudio:", err);
       resolve();
-      return;
     }
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = options.lang || 'en-US';
-    utterance.rate = options.rate || 0.95;
-
-    const voices = window.speechSynthesis.getVoices();
-    const englishVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel')));
-    if (englishVoice) {
-      utterance.voice = englishVoice;
-    }
-
-    utterance.onend = () => resolve();
-    utterance.onerror = () => resolve();
-
-    window.speechSynthesis.speak(utterance);
   });
 }

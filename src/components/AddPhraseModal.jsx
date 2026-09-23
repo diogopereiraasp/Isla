@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Tag, Plus, Trash2, Upload, Sparkles, Loader2, Volume2, Play, Wand2 } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
-import { generateElevenLabsAudioBlob, generateTTSAudioBlob, DEFAULT_ELEVENLABS_VOICES } from '../services/audioService';
+import { generateElevenLabsAudioBlob, DEFAULT_ELEVENLABS_VOICES } from '../services/audioService';
 
 export default function AddPhraseModal({
   isOpen,
@@ -100,16 +100,8 @@ export default function AddPhraseModal({
       const audio = new Audio(previewUrl);
       audio.play().catch(e => console.warn("Preview error:", e));
     } catch (err) {
-      console.warn("Erro no ElevenLabs, tentando fallback:", err);
-      try {
-        const fbBlob = await generateTTSAudioBlob(target.trim(), 'en');
-        setAudioBlob(fbBlob);
-        setFileName(`Áudio Nativo (${Math.round(fbBlob.size / 1024)} KB)`);
-        const previewUrl = URL.createObjectURL(fbBlob);
-        new Audio(previewUrl).play();
-      } catch (fbErr) {
-        alert("Não foi possível gerar áudio no momento.");
-      }
+      console.warn("Erro no ElevenLabs:", err);
+      alert(`Não foi possível gerar áudio com ElevenLabs: ${err.message || 'Verifique sua chave e conexão.'}`);
     } finally {
       setIsGeneratingEleven(false);
     }

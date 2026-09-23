@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, FileJson, Upload, Check, AlertCircle, Copy, Music, Loader2, Sparkles, Wand2 } from 'lucide-react';
-import { generateElevenLabsAudioBlob, generateTTSAudioBlob, DEFAULT_ELEVENLABS_VOICES } from '../services/audioService';
+import { generateElevenLabsAudioBlob, DEFAULT_ELEVENLABS_VOICES } from '../services/audioService';
 
 const EXAMPLE_JSON = [
   {
@@ -112,13 +112,7 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
               const blob = await generateElevenLabsAudioBlob(textToSpeak, apiKey, selectedVoice);
               card.audioBlob = blob;
             } catch (elevenErr) {
-              console.warn(`ElevenLabs error card ${i+1}, tentando fallback:`, elevenErr);
-              try {
-                const fbBlob = await generateTTSAudioBlob(textToSpeak, 'en');
-                card.audioBlob = fbBlob;
-              } catch (fbErr) {
-                console.warn(`Fallback falhou também:`, fbErr);
-              }
+              console.warn(`ElevenLabs error card ${i+1}:`, elevenErr);
             }
           }
         } else {

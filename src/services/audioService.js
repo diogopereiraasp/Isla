@@ -15,7 +15,7 @@ export async function generateElevenLabsAudioBlob(text, apiKey = '', voiceId = '
   if (!text || !text.trim()) throw new Error("Texto vazio para geração de áudio");
   
   const key = apiKey || localStorage.getItem('isla_elevenlabs_key') || 'sk_14b2355cb1e6595503cd0e2f2b9a2996f2e97148084497c1';
-  const cleanText = text.replace(/\.{2,}/g, '').trim();
+  const cleanText = text.replace(/\[sound:[^\]]+\]/gi, '').replace(/\.{2,}/g, '').trim();
 
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
   
@@ -37,12 +37,17 @@ export async function generateElevenLabsAudioBlob(text, apiKey = '', voiceId = '
   });
 
   if (!response.ok) {
-    const errJson = await response.json().catch(() => null);
-    throw new Error(errJson?.detail?.message || `Erro ElevenLabs: ${response.status} ${response.statusText}`);
+    const errText = await response.text().catch(() => '');
+    let errMsg = `Erro ElevenLabs: ${response.status} ${response.statusText}`;
+    try {
+      const errJson = JSON.parse(errText);
+      errMsg = errJson?.detail?.message || errMsg;
+    } catch (_) {}
+    throw new Error(errMsg);
   }
 
-  const blob = await response.blob();
-  return new Blob([blob], { type: 'audio/mpeg' });
+  const arrayBuffer = await response.arrayBuffer();
+  return new Blob([arrayBuffer], { type: 'audio/mpeg' });
 }
 
 /**
@@ -51,7 +56,7 @@ export async function generateElevenLabsAudioBlob(text, apiKey = '', voiceId = '
 export async function generateTTSAudioBlob(text, lang = 'en') {
   if (!text || !text.trim()) throw new Error("Texto vazio");
 
-  const cleanText = encodeURIComponent(text.trim());
+  const cleanText = encodeURIComponent(text.replace(/\[sound:[^\]]+\]/gi, '').trim());
   const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${cleanText}&tl=${lang}&client=tw-ob`;
 
   try {
@@ -72,7 +77,10 @@ export function playPhraseAudio(phrase, options = { rate: 0.95, lang: 'en-US' })
   if (!phrase) return Promise.reject(new Error("Nenhuma frase fornecida"));
 
   if (globalAudioInstance) {
-    globalAudioInstance.pause();
+    try {
+      globalAudioInstance.pause();
+      globalAudioInstance.currentTime = 0;
+    } catch (_) {}
     globalAudioInstance = null;
   }
   if ('speechSynthesis' in window) {
@@ -81,27 +89,36 @@ export function playPhraseAudio(phrase, options = { rate: 0.95, lang: 'en-US' })
 
   // 1. If custom uploaded, recorded or ElevenLabs generated audio blob exists
   if (phrase.audioBlob) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       try {
         const audioUrl = typeof phrase.audioBlob === 'string' 
           ? phrase.audioBlob 
           : URL.createObjectURL(phrase.audioBlob);
 
-        const audio = new Audio(audioUrl);
+        const audio = new Audio();
         globalAudioInstance = audio;
 
-        audio.onended = () => resolve();
-        audio.onerror = (err) => {
-          console.warn("Erro no blob de áudio local, usando sintetizador:", err);
-          speakText(phrase.target, options).then(resolve).catch(reject);
+        audio.src = audioUrl;
+
+        audio.onended = () => {
+          resolve();
         };
 
-        audio.play().catch((playErr) => {
-          console.warn("Play bloqueado pelo navegador:", playErr);
-          speakText(phrase.target, options).then(resolve).catch(reject);
-        });
+        audio.onerror = (err) => {
+          console.warn("Erro ao tocar áudio blob, usando sintetizador fallback:", err);
+          speakText(phrase.target, options).then(resolve);
+        };
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((playErr) => {
+            console.warn("Autoplay bloqueado ou erro no play:", playErr);
+            speakText(phrase.target, options).then(resolve);
+          });
+        }
       } catch (err) {
-        speakText(phrase.target, options).then(resolve).catch(reject);
+        console.warn("Exception ao tocar áudio:", err);
+        speakText(phrase.target, options).then(resolve);
       }
     });
   }

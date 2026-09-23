@@ -127,11 +127,20 @@ export default function App() {
       } else if (e.code === 'ArrowLeft') {
         e.preventDefault();
         handlePrev();
-      } else if (isRevealed && (mode === 'active' || mode === 'srs')) {
-        if (e.key === '1') onSRSFeedback(0);
-        if (e.key === '2') onSRSFeedback(3);
-        if (e.key === '3') onSRSFeedback(4);
-        if (e.key === '4') onSRSFeedback(5);
+      } else if (isRevealed) {
+        if (e.key === '1' || e.code === 'Numpad1') {
+          e.preventDefault();
+          onSRSFeedback(0);
+        } else if (e.key === '2' || e.code === 'Numpad2') {
+          e.preventDefault();
+          onSRSFeedback(3);
+        } else if (e.key === '3' || e.code === 'Numpad3') {
+          e.preventDefault();
+          onSRSFeedback(4);
+        } else if (e.key === '4' || e.code === 'Numpad4') {
+          e.preventDefault();
+          onSRSFeedback(5);
+        }
       }
     };
 

@@ -15,7 +15,7 @@ export default function AddPhraseModal({
   const [tagInput, setTagInput] = useState('');
   const [audioBlob, setAudioBlob] = useState(null);
   const [fileName, setFileName] = useState('');
-  const [audioMode, setAudioMode] = useState('record'); // 'record' | 'upload'
+  const [audioMode, setAudioMode] = useState('upload'); // 'upload' | 'record'
 
   // Pre-fill on open/edit
   React.useEffect(() => {
@@ -237,17 +237,17 @@ export default function AddPhraseModal({
               <div className="flex items-center bg-[#0a0f1d] p-0.5 rounded-lg border border-[#1f2b45] text-[11px]">
                 <button
                   type="button"
-                  onClick={() => setAudioMode('record')}
-                  className={`px-2.5 py-1 rounded-md transition ${audioMode === 'record' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400'}`}
-                >
-                  Gravar Voz
-                </button>
-                <button
-                  type="button"
                   onClick={() => setAudioMode('upload')}
                   className={`px-2.5 py-1 rounded-md transition ${audioMode === 'upload' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400'}`}
                 >
                   Arquivo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAudioMode('record')}
+                  className={`px-2.5 py-1 rounded-md transition ${audioMode === 'record' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400'}`}
+                >
+                  Gravar Voz
                 </button>
               </div>
             </div>

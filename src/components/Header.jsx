@@ -64,7 +64,7 @@ export default function Header({
         {/* Mode Selector & Desktop Action Buttons */}
         <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-end">
           
-          {/* Mode Switcher: 1. Aprender | 2. Recordação Ativa | 3. Repetição */}
+          {/* Mode Switcher: 1. Aprender | 2. Recordação Ativa */}
           <div className="bg-[#131b2e] p-1 rounded-xl border border-[#1f2b45] flex items-center text-xs font-semibold w-full sm:w-auto justify-between sm:justify-start">
             <button
               onClick={() => setMode('learn')}
@@ -86,22 +86,6 @@ export default function Header({
               }`}
             >
               Recordação Ativa
-            </button>
-
-            <button
-              onClick={() => setMode('srs')}
-              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 text-center ${
-                mode === 'srs'
-                  ? 'bg-slate-800 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <span>Repetição</span>
-              {dueTodayCount > 0 && (
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${mode === 'srs' ? 'bg-[#00c57c]/20 text-[#00c57c]' : 'bg-amber-500/20 text-amber-400'}`}>
-                  {dueTodayCount}
-                </span>
-              )}
             </button>
           </div>
 

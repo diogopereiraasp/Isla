@@ -126,9 +126,7 @@ export default function Flashcard({
         </div>
 
         <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-[#182338] text-slate-300 border border-slate-700/60 text-[10px] sm:text-[11px] font-medium tracking-wide whitespace-nowrap shrink-0">
-          {isSRSMode && "Repetição"}
-          {isLearnMode && "Aprender"}
-          {isActiveMode && "Recordação"}
+          {isLearnMode ? "Aprender" : "Recordação Ativa"}
         </span>
       </div>
 
@@ -137,9 +135,7 @@ export default function Flashcard({
         
         {/* Top Prompt Instruction */}
         <p className="text-[10px] sm:text-xs font-bold tracking-widest uppercase text-slate-400 mb-2 sm:mb-3 flex items-center justify-center gap-1.5">
-          {isActiveMode && "TRADUZA EM VOZ ALTA:"}
-          {isLearnMode && "OUÇA E REPITA:"}
-          {isSRSMode && "FALE ANTES DE VIRAR:"}
+          {isLearnMode ? "OUÇA E REPITA:" : "TRADUZA EM VOZ ALTA:"}
         </p>
 
         {/* Primary Prompt Text with Copy Button */}

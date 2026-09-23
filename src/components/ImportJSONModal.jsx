@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, FileJson, Upload, Check, AlertCircle, Copy, Music, FileText, Loader2 } from 'lucide-react';
+import { X, FileJson, Upload, Check, AlertCircle, Copy, Music, FileText, Loader2, Sparkles } from 'lucide-react';
 
 const EXAMPLE_JSON = [
   {

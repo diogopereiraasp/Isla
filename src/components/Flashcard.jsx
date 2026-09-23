@@ -1,5 +1,5 @@
-import React from 'react';
-import { Eye, ArrowLeft, ArrowRight, Sparkles, Clock, Tag } from 'lucide-react';
+import React, { useState } from 'react';
+import { Eye, ArrowLeft, ArrowRight, Sparkles, Clock, Tag, Copy, Check } from 'lucide-react';
 import AudioPlayerButton from './AudioPlayerButton';
 import SRSFeedbackButtons from './SRSFeedbackButtons';
 
@@ -15,6 +15,9 @@ export default function Flashcard({
   onPrev,
   onOpenAdd
 }) {
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [copiedRevealed, setCopiedRevealed] = useState(false);
+
   if (!phrase) {
     return (
       <div className="w-full max-w-2xl bg-[#131b2e] rounded-2xl sm:rounded-3xl border border-[#1f2b45] p-6 sm:p-12 text-center card-glow my-auto">
@@ -39,6 +42,22 @@ export default function Flashcard({
   const isActiveMode = mode === 'active';
   const isSRSMode = mode === 'srs';
   const tags = phrase.tags || [];
+
+  const handleCopyPrompt = (e) => {
+    e.stopPropagation();
+    const textToCopy = isActiveMode ? phrase.native : phrase.target;
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedPrompt(true);
+    setTimeout(() => setCopiedPrompt(false), 1500);
+  };
+
+  const handleCopyRevealed = (e) => {
+    e.stopPropagation();
+    const textToCopy = isActiveMode || isSRSMode ? phrase.target : phrase.native;
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedRevealed(true);
+    setTimeout(() => setCopiedRevealed(false), 1500);
+  };
 
   return (
     <div className={`w-full max-w-2xl bg-[#131b2e] rounded-2xl sm:rounded-3xl border border-[#1f2b45] p-4 sm:p-8 relative transition-all duration-300 ${isRevealed ? 'card-glow-active' : 'card-glow'}`}>
@@ -82,10 +101,23 @@ export default function Flashcard({
           {isSRSMode && "FALE ANTES DE VIRAR:"}
         </p>
 
-        {/* Primary Prompt Text */}
-        <h2 className="text-lg sm:text-2xl font-bold text-white tracking-tight leading-relaxed select-text break-words">
-          {isActiveMode ? phrase.native : phrase.target}
-        </h2>
+        {/* Primary Prompt Text with Copy Button */}
+        <div className="relative group inline-flex items-center justify-center gap-2">
+          <h2 className="text-lg sm:text-2xl font-bold text-white tracking-tight leading-relaxed select-text break-words">
+            {isActiveMode ? phrase.native : phrase.target}
+          </h2>
+          <button
+            onClick={handleCopyPrompt}
+            className={`p-1.5 rounded-lg border transition-all active:scale-95 ${
+              copiedPrompt
+                ? 'bg-emerald-500/20 text-[#00c57c] border-emerald-500/30'
+                : 'text-slate-400 hover:text-white bg-slate-800/60 border-slate-700/60 opacity-70 hover:opacity-100'
+            }`}
+            title="Copiar texto"
+          >
+            {copiedPrompt ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
+        </div>
 
         {/* Learn Mode Front Audio */}
         {isLearnMode && (
@@ -100,9 +132,23 @@ export default function Flashcard({
             <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#00c57c] mb-1">
               {isActiveMode || isSRSMode ? "RESPOSTA & SHADOWING:" : "TRADUÇÃO:"}
             </p>
-            <h3 className="text-base sm:text-xl font-semibold text-slate-100 leading-snug select-text break-words">
-              {isActiveMode || isSRSMode ? phrase.target : phrase.native}
-            </h3>
+            
+            <div className="relative group inline-flex items-center justify-center gap-2">
+              <h3 className="text-base sm:text-xl font-semibold text-slate-100 leading-snug select-text break-words">
+                {isActiveMode || isSRSMode ? phrase.target : phrase.native}
+              </h3>
+              <button
+                onClick={handleCopyRevealed}
+                className={`p-1.5 rounded-lg border transition-all active:scale-95 ${
+                  copiedRevealed
+                    ? 'bg-emerald-500/20 text-[#00c57c] border-emerald-500/30'
+                    : 'text-slate-400 hover:text-white bg-slate-800/60 border-slate-700/60 opacity-70 hover:opacity-100'
+                }`}
+                title="Copiar tradução"
+              >
+                {copiedRevealed ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
 
             {/* Audio Button on Reveal */}
             {(isActiveMode || isSRSMode) && (

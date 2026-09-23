@@ -25,7 +25,7 @@ export default function App() {
     handleSRSFeedback
   } = usePhrases();
 
-  const [mode, setMode] = useState('active'); // 'active' | 'learn' | 'srs'
+  const [mode, setMode] = useState('learn'); // 'learn' | 'active' | 'srs'
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
 

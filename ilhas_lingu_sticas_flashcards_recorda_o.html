@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ilhas Linguísticas & Flashcards</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', 'sans-serif'],
+          },
+          colors: {
+            app: {
+              bg: '#0a0f1d',
+              card: '#131b2e',
+              cardInner: '#182238',
+              border: '#1f2b45',
+              emerald: '#00cc88',
+              emeraldHover: '#00b377'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0a0f1d;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0a0f1d; }
+    ::-webkit-scrollbar-thumb { background: #1f2b45; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2d3d60; }
+    .card-border-glow {
+      box-shadow: 0 0 0 1px #1f2b45, 0 12px 35px -8px rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-emerald-500/30 selection:text-emerald-200">
+
+  <header class="w-full border-b border-app-border/80 bg-app-bg/90 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      
+      <!-- Top Title Brand matching screenshot -->
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+        <div class="flex items-center gap-3">
+          <div class="text-[#00d084] text-2xl flex items-center">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <div>
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white leading-tight">
+              Ilhas Linguísticas & Flashcards
+            </h1>
+            <p class="text-xs text-slate-400 font-normal">
+              Frases da sua vida pessoal para automatizar sem hesitar.
+            </p>
+          </div>
+        </div>
+
+        <!-- Mobile "+ Nova Frase" button (small screen) -->
+        <button onclick="openAddModal()" class="sm:hidden px-3 py-2 bg-[#00c57c] hover:bg-[#00af6e] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-md transition-all active:scale-95">
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>Nova</span>
+        </button>
+      </div>
+
+      <!-- Action Area: Mode Switcher & + Nova Frase button -->
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+        <!-- Mode Switcher -->
+        <div class="bg-app-card p-1 rounded-xl border border-app-border flex items-center text-xs font-semibold">
+          <button id="mode-active-btn" onclick="setMode('active')" class="px-3 py-1.5 rounded-lg transition-all text-white bg-slate-800 shadow">
+            Recordação Ativa
+          </button>
+          <button id="mode-learn-btn" onclick="setMode('learn')" class="px-3 py-1.5 rounded-lg transition-all text-slate-400 hover:text-slate-200">
+            Aprender (Flashcard)
+          </button>
+        </div>
+
+        <!-- + Nova Frase button -->
+        <button onclick="openAddModal()" class="hidden sm:flex px-4 py-2 bg-[#00c57c] hover:bg-[#00af6e] text-white text-sm font-semibold rounded-xl items-center gap-2 shadow-lg shadow-emerald-950/40 transition-all hover:scale-[1.02] active:scale-95">
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>Nova Frase</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-6 w-full flex-1 flex flex-col">
+    
+    <!-- Filter bar by Island (Category) -->
+    <div class="flex items-center justify-between gap-3 mb-6 pb-2 border-b border-app-border/40 text-xs">
+      <div class="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none" id="categories-pill-container">
+        <!-- Injected via JS -->
+      </div>
+      <button onclick="openPhraseManager()" class="text-slate-400 hover:text-slate-200 text-xs flex items-center gap-1.5 whitespace-nowrap pl-2">
+        <i class="fa-solid fa-list-ul"></i>
+        <span>Gerenciar (<span id="total-phrases-count">0</span>)</span>
+      </button>
+    </div>
+
+    <div class="flex-1 flex flex-col justify-center items-center my-auto py-2">
+      <div class="w-full max-w-2xl bg-app-card rounded-2xl border border-app-border p-6 sm:p-9 card-border-glow relative transition-all">
+        
+        <!-- Card Top Bar: Index counter and Mode Tag -->
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-8 font-medium">
+          <div class="flex items-center gap-2">
+            <span id="card-counter" class="tracking-wide">Frase 1 de 4</span>
+            <span id="card-island-tag" class="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 border border-slate-700/60">Rotina Matinal</span>
+          </div>
+          <span id="current-mode-badge" class="px-2.5 py-1 rounded-md bg-[#182338] text-slate-300 border border-slate-700/50 text-[11px] font-medium tracking-wide">
+            Recordação Ativa
+          </span>
+        </div>
+
+        <!-- Center Content of the Card -->
+        <div class="min-h-[170px] flex flex-col justify-center text-center px-1 sm:px-4">
+          
+          <!-- Mode Label (e.g. TRADUZA EM VOZ ALTA:) -->
+          <p id="card-instruction-label" class="text-[11px] sm:text-xs font-bold tracking-widest uppercase text-slate-400 mb-4">
+            TRADUZA EM VOZ ALTA:
+          </p>
+
+          <!-- Main Prominent Text (e.g., Portuguese trigger or English prompt) -->
+          <h2 id="card-main-text" class="text-xl sm:text-2xl font-bold text-white tracking-tight leading-relaxed">
+            Carregando frases...
+          </h2>
+
+          <!-- Audio controls in front (when in learn mode or after reveal) -->
+          <div id="card-front-audio-container" class="mt-4 flex items-center justify-center gap-2">
+            <!-- Injected dynamically -->
+          </div>
+
+          <!-- Revealed Answer Section (Initially Hidden) -->
+          <div id="card-revealed-section" class="mt-6 pt-6 border-t border-app-border/80 hidden transition-all duration-200">
+            <p id="card-revealed-sublabel" class="text-[10px] font-bold uppercase tracking-wider text-[#00c57c] mb-1.5">
+              IDIOMA ALVO:
+            </p>
+            <h3 id="card-revealed-text" class="text-lg sm:text-xl font-semibold text-slate-100 leading-snug">
+              <!-- Revealed phrase text -->
+            </h3>
+            
+            <!-- Shadowing Audio Trigger in Active Mode -->
+            <div id="card-revealed-audio-actions" class="mt-3 flex items-center justify-center gap-2">
+              <!-- Play audio button -->
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-9 pt-6 border-t border-app-border/60">
+          
+          <!-- Primary Reveal Button -->
+          <button id="reveal-btn" onclick="revealCard()" class="w-full py-3.5 bg-[#1b263b] hover:bg-[#23324d] active:scale-[0.99] text-slate-200 font-medium text-sm rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-700/60 shadow-md">
+            <i class="fa-regular fa-eye text-sm"></i>
+            <span id="reveal-btn-text">Revelar Tradução</span>
+          </button>
+
+          <!-- Post-reveal: Feedback / Navigation Buttons -->
+          <div id="feedback-buttons-container" class="grid grid-cols-2 gap-3 hidden">
+            <button onclick="handleResponse(false)" class="py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs sm:text-sm font-semibold rounded-xl transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-rotate-left text-xs"></i>
+              <span>Hesitei / Repetir</span>
+            </button>
+            <button onclick="handleResponse(true)" class="py-3 bg-emerald-500/15 hover:bg-emerald-500/25 text-[#00d084] border border-emerald-500/30 text-xs sm:text-sm font-semibold rounded-xl transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-check text-xs"></i>
+              <span>Falei no Automático</span>
+            </button>
+          </div>
+
+          <!-- Learn Mode Navigation Buttons (When in Learn Mode) -->
+          <div id="learn-nav-container" class="grid grid-cols-2 gap-3 hidden">
+            <button onclick="prevPhrase()" class="py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-medium rounded-xl transition flex items-center justify-center gap-2 border border-slate-700/60">
+              <i class="fa-solid fa-arrow-left text-xs"></i>
+              <span>Frase Anterior</span>
+            </button>
+            <button onclick="nextPhrase()" class="py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-medium rounded-xl transition flex items-center justify-center gap-2 border border-slate-700/60">
+              <span>Próxima Frase</span>
+              <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Quick keyboard helper -->
+      <div class="mt-4 flex items-center justify-center gap-4 text-[11px] text-slate-500">
+        <span class="flex items-center gap-1"><kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-400 font-mono">Espaço</kbd> Revelar / Tocar Áudio</span>
+        <span class="flex items-center gap-1"><kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-400 font-mono">← / →</kbd> Navegar</span>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Modal: Nova Frase with Audio File Upload -->
+  <div id="modal-add-phrase" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-app-card border border-app-border rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-base sm:text-lg text-white flex items-center gap-2">
+          <i class="fa-solid fa-layer-group text-[#00c57c]"></i>
+          <span>Nova Frase para sua Ilha</span>
+        </h3>
+        <button onclick="closeAddModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="new-phrase-form" onsubmit="handleSavePhrase(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Frase em Português (Gatilho da sua Vida)</label>
+          <input type="text" id="input-native" required placeholder="Ex: Eu costumo tomar café puro todas as manhãs antes de trabalhar." class="w-full bg-slate-900 border border-app-border rounded-xl px-3.5 py-2.5 text-slate-100 placeholder-slate-500 focus:border-[#00c57c] focus:outline-none text-xs">
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Frase no Idioma Alvo (Inglês)</label>
+          <input type="text" id="input-target" required placeholder="Ex: I usually drink black coffee every morning before working." class="w-full bg-slate-900 border border-app-border rounded-xl px-3.5 py-2.5 text-slate-100 placeholder-slate-500 focus:border-[#00c57c] focus:outline-none text-xs">
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Ilha Linguística (Categoria)</label>
+          <input type="text" id="input-island" list="islands-datalist" placeholder="Ex: Rotina, Trabalho, Opiniões, Viagens" value="Geral" class="w-full bg-slate-900 border border-app-border rounded-xl px-3.5 py-2.5 text-slate-100 placeholder-slate-500 focus:border-[#00c57c] focus:outline-none text-xs">
+          <datalist id="islands-datalist">
+            <option value="Rotina Matinal">
+            <option value="Trabalho & Carreira">
+            <option value="Hobbies & Tempo Livre">
+            <option value="Opiniões & Gostos">
+          </datalist>
+        </div>
+
+        <!-- Audio File Upload Area -->
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">
+            Arquivo de Áudio Nativo (.mp3, .wav, .m4a, .ogg)
+            <span class="text-slate-500 font-normal ml-1">(Opcional - se vazio, usará voz do navegador)</span>
+          </label>
+          <div class="border border-dashed border-slate-700 hover:border-slate-500 rounded-xl p-3.5 text-center bg-slate-900/60 cursor-pointer relative" id="drop-area">
+            <input type="file" id="input-audio" accept="audio/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="handleAudioSelect(this)">
+            <div id="audio-upload-preview" class="flex flex-col items-center justify-center gap-1 text-slate-400">
+              <i class="fa-solid fa-cloud-arrow-up text-lg text-slate-400"></i>
+              <span id="audio-file-name" class="font-medium text-slate-300">Selecione ou solte um arquivo de áudio</span>
+              <span class="text-[10px] text-slate-500">Salvo diretamente no seu navegador (IndexedDB)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-app-border/80 flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-xl text-slate-400 hover:text-slate-200">Cancelar</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl font-semibold bg-[#00c57c] hover:bg-[#00af6e] text-white shadow-md transition-all">Salvar Frase</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Gerenciador de Frases -->
+  <div id="modal-manager" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-app-card border border-app-border rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b border-app-border">
+        <h3 class="font-bold text-base text-white flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-[#00c57c]"></i>
+          <span>Minhas Frases & Áudios</span>
+        </h3>
+        <button onclick="closePhraseManager()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs" id="manager-phrases-list">
+        <!-- Injected via JS -->
+      </div>
+
+      <div class="pt-2 border-t border-app-border flex justify-between items-center text-xs">
+        <span class="text-slate-500">Persistência local segura via IndexedDB</span>
+        <button onclick="closePhraseManager()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio playback element for local files -->
+  <audio id="global-audio-player" class="hidden"></audio>
+
+  <script>
+    // --- DATABASE CONFIGURATION (IndexedDB) ---
+    const DB_NAME = 'IlhasLinguisticasDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'phrases';
+    let db = null;
+
+    // Initial default seed phrases
+    const DEFAULT_PHRASES = [
+      {
+        id: 1,
+        island: "Rotina Matinal",
+        native: "Eu costumo tomar café puro todas as manhãs antes de trabalhar.",
+        target: "I usually drink black coffee every morning before working.",
+        hasAudio: false,
+        audioBlob: null
+      },
+      {
+        id: 2,
+        island: "Trabalho & Carreira",
+        native: "Eu trabalho no computador e passo boa parte do dia resolvendo problemas complexos.",
+        target: "I work on the computer and I spend most of the day solving complex problems.",
+        hasAudio: false,
+        audioBlob: null
+      },
+      {
+        id: 3,
+        island: "Hobbies & Tempo Livre",
+        native: "Nos fins de semana, gosto de caminhar no parque e escutar podcasts.",
+        target: "On weekends, I like to take walks in the park and listen to podcasts.",
+        hasAudio: false,
+        audioBlob: null
+      },
+      {
+        id: 4,
+        island: "Opiniões & Gostos",
+        native: "Acredito que consistência diária de quinze minutos supera horas estudadas de uma vez.",
+        target: "I believe that a daily consistency of fifteen minutes beats hours of studying all at once.",
+        hasAudio: false,
+        audioBlob: null
+      }
+    ];
+
+    // Open IndexedDB
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains(STORE_NAME)) {
+            database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          }
+        };
+
+        request.onsuccess = (e) => {
+          db = e.target.result;
+          resolve(db);
+        };
+
+        request.onerror = (e) => {
+          console.error("IndexedDB error:", e.target.error);
+          reject(e.target.error);
+        };
+      });
+    }
+
+    // Load all phrases from DB (or seed with defaults)
+    function getAllPhrasesFromDB() {
+      return new Promise((resolve) => {
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const req = store.getAll();
+
+        req.onsuccess = () => {
+          if (!req.result || req.result.length === 0) {
+            // Seed defaults
+            seedDefaults().then(resolve);
+          } else {
+            resolve(req.result);
+          }
+        };
+        req.onerror = () => resolve([]);
+      });
+    }
+
+    function seedDefaults() {
+      return new Promise((resolve) => {
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        DEFAULT_PHRASES.forEach(p => store.put(p));
+        transaction.oncomplete = () => {
+          resolve(DEFAULT_PHRASES);
+        };
+      });
+    }
+
+    function savePhraseToDB(phrase) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const req = store.put(phrase);
+        req.onsuccess = () => resolve(true);
+        req.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    function deletePhraseFromDB(id) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const req = store.delete(id);
+        req.onsuccess = () => resolve(true);
+        req.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    // --- APPLICATION STATE ---
+    let appState = {
+      mode: 'active', // 'active' (Recordação Ativa) or 'learn' (Flashcard de Aprendizado)
+      phrases: [],
+      filteredPhrases: [],
+      selectedIsland: 'all',
+      currentIndex: 0,
+      isRevealed: false
+    };
+
+    let selectedAudioFile = null;
+
+    // --- AUDIO HANDLING (Local File or Web Speech API fallback) ---
+    const globalAudioPlayer = document.getElementById('global-audio-player');
+
+    function playPhraseAudio(phrase) {
+      if (!phrase) return;
+
+      if (phrase.audioBlob) {
+        try {
+          const audioUrl = URL.createObjectURL(phrase.audioBlob);
+          globalAudioPlayer.src = audioUrl;
+          globalAudioPlayer.play().catch(e => console.warn("Audio play prevented:", e));
+          return;
+        } catch (err) {
+          console.warn("Could not play custom audio blob, falling back to TTS", err);
+        }
+      }
+
+      // Fallback: Web Speech Synthesis
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(phrase.target);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    // --- CONTROLLER & VIEW RENDERING ---
+    function setMode(newMode) {
+      appState.mode = newMode;
+      appState.isRevealed = false;
+
+      const activeBtn = document.getElementById('mode-active-btn');
+      const learnBtn = document.getElementById('mode-learn-btn');
+      const modeBadge = document.getElementById('current-mode-badge');
+
+      if (newMode === 'active') {
+        activeBtn.className = "px-3 py-1.5 rounded-lg transition-all text-white bg-slate-800 shadow";
+        learnBtn.className = "px-3 py-1.5 rounded-lg transition-all text-slate-400 hover:text-slate-200";
+        modeBadge.innerText = "Recordação Ativa";
+      } else {
+        learnBtn.className = "px-3 py-1.5 rounded-lg transition-all text-white bg-slate-800 shadow";
+        activeBtn.className = "px-3 py-1.5 rounded-lg transition-all text-slate-400 hover:text-slate-200";
+        modeBadge.innerText = "Aprender (Flashcard)";
+      }
+
+      renderCurrentCard();
+    }
+
+    function applyIslandFilter(island) {
+      appState.selectedIsland = island;
+      if (island === 'all') {
+        appState.filteredPhrases = [...appState.phrases];
+      } else {
+        appState.filteredPhrases = appState.phrases.filter(p => p.island === island);
+      }
+      appState.currentIndex = 0;
+      appState.isRevealed = false;
+      renderIslandPills();
+      renderCurrentCard();
+    }
+
+    function renderIslandPills() {
+      const container = document.getElementById('categories-pill-container');
+      const uniqueIslands = ['all', ...new Set(appState.phrases.map(p => p.island || 'Geral'))];
+
+      container.innerHTML = uniqueIslands.map(island => {
+        const isSelected = appState.selectedIsland === island;
+        const label = island === 'all' ? 'Todas as Ilhas' : island;
+        return `
+          <button onclick="applyIslandFilter('${island}')" class="px-2.5 py-1 rounded-lg text-xs transition-all whitespace-nowrap ${isSelected ? 'bg-slate-800 text-[#00d084] font-semibold border border-slate-700' : 'text-slate-400 hover:text-slate-200 bg-transparent'}">
+            ${label}
+          </button>
+        `;
+      }).join('');
+
+      document.getElementById('total-phrases-count').innerText = appState.phrases.length;
+    }
+
+    function renderCurrentCard() {
+      const list = appState.filteredPhrases;
+      const counterEl = document.getElementById('card-counter');
+      const islandTagEl = document.getElementById('card-island-tag');
+      const instructionLabel = document.getElementById('card-instruction-label');
+      const mainTextEl = document.getElementById('card-main-text');
+      const frontAudioContainer = document.getElementById('card-front-audio-container');
+      const revealedSection = document.getElementById('card-revealed-section');
+      const revealedSublabel = document.getElementById('card-revealed-sublabel');
+      const revealedTextEl = document.getElementById('card-revealed-text');
+      const revealedAudioActions = document.getElementById('card-revealed-audio-actions');
+      
+      const revealBtn = document.getElementById('reveal-btn');
+      const revealBtnText = document.getElementById('reveal-btn-text');
+      const feedbackBtns = document.getElementById('feedback-buttons-container');
+      const learnNavBtns = document.getElementById('learn-nav-container');
+
+      if (!list || list.length === 0) {
+        counterEl.innerText = "0 de 0";
+        islandTagEl.innerText = "Vazio";
+        instructionLabel.innerText = "NENHUMA FRASE";
+        mainTextEl.innerText = "Nenhuma frase cadastrada nesta Ilha. Clique em '+ Nova Frase' para adicionar!";
+        frontAudioContainer.innerHTML = '';
+        revealedSection.classList.add('hidden');
+        revealBtn.classList.add('hidden');
+        feedbackBtns.classList.add('hidden');
+        learnNavBtns.classList.add('hidden');
+        return;
+      }
+
+      if (appState.currentIndex >= list.length) {
+        appState.currentIndex = 0;
+      }
+
+      const phrase = list[appState.currentIndex];
+
+      counterEl.innerText = `Frase ${appState.currentIndex + 1} de ${list.length}`;
+      islandTagEl.innerText = phrase.island || 'Geral';
+
+      if (appState.mode === 'active') {
+        // --- MODO RECORDAÇÃO ATIVA (Idêntico ao print do usuário) ---
+        instructionLabel.innerText = "TRADUZA EM VOZ ALTA:";
+        mainTextEl.innerText = phrase.native;
+        frontAudioContainer.innerHTML = '';
+
+        revealedSublabel.innerText = "IDIOMA ALVO (SHADOWING):";
+        revealedTextEl.innerText = phrase.target;
+
+        revealedAudioActions.innerHTML = `
+          <button onclick="playPhraseAudio(appState.filteredPhrases[appState.currentIndex])" class="px-3.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-[#00c57c] border border-emerald-500/30 text-xs font-semibold flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-volume-high text-xs"></i>
+            <span>${phrase.audioBlob ? 'Ouvir Áudio Gravado' : 'Ouvir Pronúncia'}</span>
+          </button>
+        `;
+
+        revealBtnText.innerText = "Revelar Tradução";
+      } else {
+        // --- MODO APRENDER (FLASHCARD DE NOVAS FRASES) ---
+        instructionLabel.innerText = "OUÇA E REPITA NO IDIOMA ALVO:";
+        mainTextEl.innerText = phrase.target;
+
+        // Front audio button readily available
+        frontAudioContainer.innerHTML = `
+          <button onclick="playPhraseAudio(appState.filteredPhrases[appState.currentIndex])" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-2 transition active:scale-95">
+            <i class="fa-solid fa-volume-high text-emerald-400"></i>
+            <span>${phrase.audioBlob ? 'Tocar Áudio Nativo' : 'Ouvir Pronúncia'}</span>
+          </button>
+        `;
+
+        revealedSublabel.innerText = "SIGNIFICADO EM PORTUGUÊS:";
+        revealedTextEl.innerText = phrase.native;
+        revealedAudioActions.innerHTML = '';
+
+        revealBtnText.innerText = "Ver Significado / Tradução";
+      }
+
+      // Visibility state based on isRevealed
+      if (appState.isRevealed) {
+        revealedSection.classList.remove('hidden');
+        revealBtn.classList.add('hidden');
+
+        if (appState.mode === 'active') {
+          feedbackBtns.classList.remove('hidden');
+          learnNavBtns.classList.add('hidden');
+        } else {
+          feedbackBtns.classList.add('hidden');
+          learnNavBtns.classList.remove('hidden');
+        }
+      } else {
+        revealedSection.classList.add('hidden');
+        revealBtn.classList.remove('hidden');
+        feedbackBtns.classList.add('hidden');
+        learnNavBtns.classList.add('hidden');
+      }
+    }
+
+    function revealCard() {
+      appState.isRevealed = true;
+      renderCurrentCard();
+
+      // Automatically play audio when revealed in Active mode to facilitate shadowing
+      if (appState.mode === 'active') {
+        const current = appState.filteredPhrases[appState.currentIndex];
+        playPhraseAudio(current);
+      }
+    }
+
+    function nextPhrase() {
+      if (appState.filteredPhrases.length > 0) {
+        appState.currentIndex = (appState.currentIndex + 1) % appState.filteredPhrases.length;
+        appState.isRevealed = false;
+        renderCurrentCard();
+      }
+    }
+
+    function prevPhrase() {
+      if (appState.filteredPhrases.length > 0) {
+        appState.currentIndex = (appState.currentIndex - 1 + appState.filteredPhrases.length) % appState.filteredPhrases.length;
+        appState.isRevealed = false;
+        renderCurrentCard();
+      }
+    }
+
+    function handleResponse(success) {
+      nextPhrase();
+    }
+
+    // --- MODAL & AUDIO UPLOAD HANDLING ---
+    function openAddModal() {
+      document.getElementById('modal-add-phrase').classList.remove('hidden');
+      selectedAudioFile = null;
+      document.getElementById('audio-file-name').innerText = "Selecione ou solte um arquivo de áudio";
+      document.getElementById('input-native').focus();
+    }
+
+    function closeAddModal() {
+      document.getElementById('modal-add-phrase').classList.add('hidden');
+      document.getElementById('new-phrase-form').reset();
+      selectedAudioFile = null;
+    }
+
+    function handleAudioSelect(input) {
+      if (input.files && input.files[0]) {
+        selectedAudioFile = input.files[0];
+        document.getElementById('audio-file-name').innerText = `Selecionado: ${selectedAudioFile.name} (${Math.round(selectedAudioFile.size / 1024)} KB)`;
+      }
+    }
+
+    async function handleSavePhrase(e) {
+      e.preventDefault();
+      const native = document.getElementById('input-native').value.trim();
+      const target = document.getElementById('input-target').value.trim();
+      const island = document.getElementById('input-island').value.trim() || 'Geral';
+
+      if (!native || !target) return;
+
+      const newPhrase = {
+        id: Date.now(),
+        island,
+        native,
+        target,
+        hasAudio: !!selectedAudioFile,
+        audioBlob: selectedAudioFile ? selectedAudioFile : null
+      };
+
+      await savePhraseToDB(newPhrase);
+      appState.phrases.push(newPhrase);
+      
+      // Update filter view
+      applyIslandFilter(appState.selectedIsland);
+      appState.currentIndex = appState.filteredPhrases.length - 1;
+      appState.isRevealed = false;
+
+      closeAddModal();
+      renderCurrentCard();
+    }
+
+    // --- PHRASE MANAGER MODAL ---
+    function openPhraseManager() {
+      const container = document.getElementById('manager-phrases-list');
+      const modal = document.getElementById('modal-manager');
+
+      container.innerHTML = appState.phrases.map((phrase, idx) => `
+        <div class="p-3 bg-slate-900 border border-app-border rounded-xl flex items-center justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-400">${phrase.island || 'Geral'}</span>
+              ${phrase.audioBlob ? '<span class="text-[10px] text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-file-audio"></i> Áudio Nativo</span>' : '<span class="text-[10px] text-slate-500">Voz Automática</span>'}
+            </div>
+            <p class="font-medium text-slate-200 truncate">${phrase.native}</p>
+            <p class="text-slate-400 text-[11px] truncate">${phrase.target}</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="playPhraseAudio(appState.phrases[${idx}])" class="p-2 text-slate-400 hover:text-emerald-400 rounded-lg hover:bg-slate-800 transition" title="Testar Áudio">
+              <i class="fa-solid fa-volume-high text-xs"></i>
+            </button>
+            <button onclick="removePhrase(${phrase.id})" class="p-2 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition" title="Excluir Frase">
+              <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      modal.classList.remove('hidden');
+    }
+
+    function closePhraseManager() {
+      document.getElementById('modal-manager').classList.add('hidden');
+    }
+
+    async function removePhrase(id) {
+      await deletePhraseFromDB(id);
+      appState.phrases = appState.phrases.filter(p => p.id !== id);
+      applyIslandFilter(appState.selectedIsland);
+      openPhraseManager();
+      renderCurrentCard();
+    }
+
+    // --- KEYBOARD SHORTCUTS ---
+    window.addEventListener('keydown', (e) => {
+      // Avoid firing when user is typing in form inputs
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (!appState.isRevealed) {
+          revealCard();
+        } else {
+          const cur = appState.filteredPhrases[appState.currentIndex];
+          playPhraseAudio(cur);
+        }
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        nextPhrase();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        prevPhrase();
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await initDB();
+        appState.phrases = await getAllPhrasesFromDB();
+        applyIslandFilter('all');
+      } catch (err) {
+        console.error("Initialization error:", err);
+      }
+    });
+  </script>
+</body>
+</html>

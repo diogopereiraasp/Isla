@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Search, Trash2, Edit3, Volume2, Mic, Clock, Tag } from 'lucide-react';
+import { X, Search, Trash2, Edit3, Volume2, Mic, Clock, Tag, Video } from 'lucide-react';
 import AudioPlayerButton from './AudioPlayerButton';
 
 export default function PhraseManagerModal({
@@ -120,6 +120,16 @@ export default function PhraseManagerModal({
                 </div>
 
                 <div className="flex items-center gap-0.5 shrink-0">
+                  <a
+                    href={`https://youglish.com/pronounce/${encodeURIComponent(phrase.target.replace(/\[sound:[^\]]+\]/gi, '').replace(/[^\w\s'?]/gi, ' ').trim().replace(/\s+/g, '_'))}/english`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg transition hover:bg-rose-500/10"
+                    title="Ver exemplos reais no YouGlish"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                  </a>
+
                   <AudioPlayerButton phrase={phrase} variant="compact" />
                   
                   <button

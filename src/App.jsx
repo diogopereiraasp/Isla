@@ -112,7 +112,7 @@ export default function App() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-      if (isAddModalOpen || isManagerOpen || isStatsOpen) return;
+      if (isAddModalOpen || isImportModalOpen || isManagerOpen || isStatsOpen) return;
 
       if (e.code === 'Space') {
         e.preventDefault();
@@ -137,7 +137,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isRevealed, currentPhrase, mode, isAddModalOpen, isManagerOpen, isStatsOpen, filteredPhrases.length]);
+  }, [isRevealed, currentPhrase, mode, isAddModalOpen, isImportModalOpen, isManagerOpen, isStatsOpen, filteredPhrases.length]);
 
   return (
     <div className="min-h-screen flex flex-col justify-between selection:bg-emerald-500/30 selection:text-emerald-200">

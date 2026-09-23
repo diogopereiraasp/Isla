@@ -72,10 +72,6 @@ export default function App() {
   // Reveal handler
   const handleReveal = () => {
     setIsRevealed(true);
-    // In active or SRS mode, automatically play the target audio for shadowing
-    if (currentPhrase && (mode === 'active' || mode === 'srs')) {
-      playPhraseAudio(currentPhrase);
-    }
   };
 
   const handleNext = () => {

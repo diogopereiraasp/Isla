@@ -1,33 +1,44 @@
-import React, { useState } from 'react';
-import { X, FileJson, Upload, Check, AlertCircle, Copy, Music, FileText, Loader2, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, FileJson, Upload, Check, AlertCircle, Copy, Music, Loader2, Sparkles, Wand2 } from 'lucide-react';
+import { generateElevenLabsAudioBlob, generateTTSAudioBlob, DEFAULT_ELEVENLABS_VOICES } from '../services/audioService';
 
 const EXAMPLE_JSON = [
   {
     "frente": "was daring enough to take the King's challenge.",
     "verso": "fosse ousado o suficiente para aceitar o desafio do Rei.",
-    "audio": "challenge.mp3",
     "tags": ["the_endless_tale"]
   },
   {
     "frente": "I usually drink black coffee every morning before working.",
     "verso": "Eu costumo tomar café puro todas as manhãs antes de trabalhar.",
-    "audio": "coffee.mp3",
     "tags": ["rotina_matinal"]
   }
 ];
 
 export default function ImportJSONModal({ isOpen, onClose, onImport }) {
   const [jsonText, setJsonText] = useState('');
-  const [audioFilesMap, setAudioFilesMap] = useState({}); // { "filename.mp3": File }
-  const [autoGenerateAudio, setAutoGenerateAudio] = useState(false);
+  const [audioFilesMap, setAudioFilesMap] = useState({});
+  const [generateWithElevenLabs, setGenerateWithElevenLabs] = useState(true);
+  const [selectedVoice, setSelectedVoice] = useState('21m00Tcm4TlvDq8ikWAM'); // Rachel
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('isla_elevenlabs_key') || 'sk_14b2355cb1e6595503cd0e2f2b9a2996f2e97148084497c1');
+  
+  // Progress tracking
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progressText, setProgressText] = useState('');
+  const [progressCurrent, setProgressCurrent] = useState(0);
+  const [progressTotal, setProgressTotal] = useState(0);
   const [error, setError] = useState(null);
   const [successCount, setSuccessCount] = useState(null);
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem('isla_elevenlabs_key', apiKey);
+    }
+  }, [apiKey]);
+
   if (!isOpen) return null;
 
-  // Handle files: can accept .json and multiple .mp3 / .wav / .m4a
   const handleFilesSelected = (e) => {
     setError(null);
     setSuccessCount(null);
@@ -63,7 +74,6 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
     }
 
     try {
-      setIsProcessing(true);
       const parsed = JSON.parse(jsonText);
       let cardsArray = [];
 
@@ -81,36 +91,54 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
         throw new Error("Nenhum card encontrado no JSON fornecido.");
       }
 
-      // If user enabled auto-generation, fetch TTS for items without audio file
-      if (autoGenerateAudio) {
-        const { generateTTSAudioBlob } = await import('../services/audioService');
-        for (let card of cardsArray) {
-          const audioKey = (card.audio || card.sound || '').toLowerCase().trim();
-          if (!audioFilesMap[audioKey] && !card.audioBlob) {
+      setIsProcessing(true);
+      setProgressTotal(cardsArray.length);
+      setProgressCurrent(0);
+
+      // Process and generate audio for each card if option enabled
+      for (let i = 0; i < cardsArray.length; i++) {
+        const card = cardsArray[i];
+        setProgressCurrent(i + 1);
+
+        const audioKey = (card.audio || card.sound || '').toLowerCase().trim();
+        const hasManualAudio = !!audioFilesMap[audioKey] || !!card.audioBlob;
+
+        if (generateWithElevenLabs && !hasManualAudio) {
+          const textToSpeak = (card.target || card.frente || card.front || '').replace(/\[sound:[^\]]+\]/gi, '').trim();
+          
+          if (textToSpeak) {
+            setProgressText(`Gerando áudio IA ${i + 1}/${cardsArray.length}: "${textToSpeak.slice(0, 30)}..."`);
             try {
-              const textToSpeak = card.target || card.frente || card.front;
-              if (textToSpeak) {
-                const blob = await generateTTSAudioBlob(textToSpeak, 'en');
-                card.audioBlob = blob;
+              const blob = await generateElevenLabsAudioBlob(textToSpeak, apiKey, selectedVoice);
+              card.audioBlob = blob;
+            } catch (elevenErr) {
+              console.warn(`ElevenLabs error card ${i+1}, tentando fallback:`, elevenErr);
+              try {
+                const fbBlob = await generateTTSAudioBlob(textToSpeak, 'en');
+                card.audioBlob = fbBlob;
+              } catch (fbErr) {
+                console.warn(`Fallback falhou também:`, fbErr);
               }
-            } catch (ttsErr) {
-              console.warn("TTS fetch skip:", ttsErr);
             }
           }
+        } else {
+          setProgressText(`Processando card ${i + 1}/${cardsArray.length}...`);
         }
       }
 
+      setProgressText("Salvando cards e áudios no banco local...");
       const imported = await onImport(cardsArray, audioFilesMap);
       setSuccessCount(imported);
+      
       setTimeout(() => {
         onClose();
         setJsonText('');
         setAudioFilesMap({});
         setSuccessCount(null);
+        setIsProcessing(false);
       }, 1500);
     } catch (err) {
       setError(err.message || "Estrutura JSON inválida. Verifique a sintaxe.");
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -126,7 +154,7 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
     setError(null);
   };
 
-  const audioCount = Object.keys(audioFilesMap).length;
+  const progressPercent = progressTotal > 0 ? Math.round((progressCurrent / progressTotal) * 100) : 0;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -138,84 +166,108 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400">
               <FileJson className="w-5 h-5" />
             </div>
-            <span>Importar Cards &amp; Áudios em Massa</span>
+            <span>Importar Cards &amp; Gerar Áudios ElevenLabs</span>
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition active:scale-95"
+            disabled={isProcessing}
+            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition active:scale-95 disabled:opacity-50"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Upload File or Paste */}
         <form onSubmit={handleImportSubmit} className="space-y-4 text-xs">
           
-          {/* File input (accepts .json AND audio files simultaneously) */}
+          {/* File input */}
           <div className="space-y-2">
             <label className="font-semibold text-slate-300">
-              1. Selecione o arquivo <code className="text-blue-400 bg-slate-900 px-1.5 py-0.5 rounded">.json</code> + arquivos de <code className="text-emerald-400 bg-slate-900 px-1.5 py-0.5 rounded">áudio</code>:
+              1. Selecione seu arquivo <code className="text-blue-400 bg-slate-900 px-1.5 py-0.5 rounded">.json</code>:
             </label>
             
             <div className="border border-dashed border-slate-700 hover:border-slate-500 rounded-2xl p-4 text-center bg-[#0a0f1d]/70 cursor-pointer relative transition">
               <input
                 type="file"
                 multiple
+                disabled={isProcessing}
                 accept=".json,application/json,audio/*"
                 onChange={handleFilesSelected}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full disabled:cursor-not-allowed"
               />
               <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
                 <div className="flex items-center gap-2 text-blue-400">
                   <FileJson className="w-5 h-5" />
                   <span className="text-slate-500">+</span>
-                  <Music className="w-5 h-5 text-emerald-400" />
+                  <Wand2 className="w-5 h-5 text-emerald-400" />
                 </div>
                 <span className="font-medium text-slate-200 text-xs">
-                  Arraste ou selecione o <strong className="text-white">JSON</strong> e os <strong className="text-white">áudios (.mp3)</strong> juntos
+                  Arraste ou selecione o arquivo <strong className="text-white">.json</strong>
                 </span>
                 <span className="text-[10px] text-slate-500">
-                  O Isla conecta automaticamente cada áudio pelo nome definido no JSON
+                  O Isla gera os áudios via ElevenLabs automaticamente para você
                 </span>
               </div>
             </div>
+          </div>
 
-            {/* Audio Files Attached Badge */}
-            {audioCount > 0 && (
-              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between text-xs text-emerald-400">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <Music className="w-3.5 h-3.5" />
-                  {audioCount} {audioCount === 1 ? 'arquivo de áudio carregado' : 'arquivos de áudio carregados'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setAudioFilesMap({})}
-                  className="text-[11px] text-slate-400 hover:text-rose-400 underline"
-                >
-                  Limpar áudios
-                </button>
+          {/* ElevenLabs Settings Box */}
+          <div className="p-3.5 bg-slate-900/90 border border-slate-800 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Wand2 className="w-4 h-4 text-emerald-400" />
+                <span className="font-semibold text-slate-200">Gerar Áudios com ElevenLabs</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  disabled={isProcessing}
+                  checked={generateWithElevenLabs}
+                  onChange={(e) => setGenerateWithElevenLabs(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#00c57c]"></div>
+              </label>
+            </div>
+
+            {generateWithElevenLabs && (
+              <div className="space-y-2.5 pt-1 text-xs border-t border-slate-800/80">
+                <div>
+                  <label className="block text-slate-400 mb-1">Voz do ElevenLabs:</label>
+                  <select
+                    disabled={isProcessing}
+                    value={selectedVoice}
+                    onChange={(e) => setSelectedVoice(e.target.value)}
+                    className="w-full bg-[#0a0f1d] border border-[#1f2b45] rounded-xl px-3 py-2 text-slate-200 focus:border-[#00c57c] focus:outline-none"
+                  >
+                    {DEFAULT_ELEVENLABS_VOICES.map(v => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             )}
           </div>
 
-          {/* JSON Preview/Paste Textarea */}
+          {/* JSON Textarea */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
               <label className="font-semibold text-slate-300">
-                2. Estrutura do JSON:
+                2. Conteúdo do JSON:
               </label>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={fillWithExample}
-                  className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium underline"
+                  disabled={isProcessing}
+                  className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium underline disabled:opacity-50"
                 >
                   Preencher Exemplo
                 </button>
                 <button
                   type="button"
                   onClick={copyTemplate}
-                  className="text-[11px] text-slate-400 hover:text-slate-200 flex items-center gap-1"
+                  disabled={isProcessing}
+                  className="text-[11px] text-slate-400 hover:text-slate-200 flex items-center gap-1 disabled:opacity-50"
                 >
                   <Copy className="w-3 h-3" />
                   <span>{copied ? 'Copiado!' : 'Copiar Modelo'}</span>
@@ -224,35 +276,37 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
             </div>
 
             <textarea
-              rows={7}
+              rows={6}
+              disabled={isProcessing}
               value={jsonText}
               onChange={(e) => setJsonText(e.target.value)}
-              placeholder={`[\n  {\n    "frente": "was daring enough to take the Kings challenge.",\n    "verso": "fosse ousado o suficiente para aceitar o desafio do Rei.",\n    "audio": "challenge.mp3",\n    "tags": ["the_endless_tale"]\n  }\n]`}
-              className="w-full bg-[#0a0f1d] border border-[#1f2b45] rounded-2xl p-3 text-slate-100 placeholder-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-xs font-mono transition"
+              placeholder={`[\n  {\n    "frente": "was daring enough to take the Kings challenge.",\n    "verso": "fosse ousado o suficiente para aceitar o desafio do Rei.",\n    "tags": ["the_endless_tale"]\n  }\n]`}
+              className="w-full bg-[#0a0f1d] border border-[#1f2b45] rounded-2xl p-3 text-slate-100 placeholder-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-xs font-mono transition disabled:opacity-50"
             />
           </div>
 
-          {/* Auto-generate Audio Option */}
-          <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-2xl flex items-center justify-between gap-3">
-            <div className="space-y-0.5">
-              <span className="font-semibold text-slate-200 text-xs flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#00c57c]" />
-                <span>Gerar Áudio Automático (IA)</span>
-              </span>
-              <p className="text-[11px] text-slate-400">
-                Baixa e salva o áudio MP3 com pronúncia nativa para os cards que não possuem arquivo.
+          {/* Progress Bar when Generating */}
+          {isProcessing && (
+            <div className="p-4 bg-slate-900 border border-blue-500/30 rounded-2xl space-y-2 animate-fadeIn">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-300 font-medium flex items-center gap-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
+                  <span className="truncate max-w-[280px]">{progressText || 'Gerando áudios ElevenLabs...'}</span>
+                </span>
+                <span className="font-mono font-bold text-blue-400">{progressPercent}%</span>
+              </div>
+              
+              <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-[#00c57c] h-full transition-all duration-300 rounded-full"
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
+              </div>
+              <p className="text-[10px] text-slate-500 text-center">
+                Gravando áudios permanentemente no seu dispositivo ({progressCurrent} de {progressTotal})
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer shrink-0">
-              <input
-                type="checkbox"
-                checked={autoGenerateAudio}
-                onChange={(e) => setAutoGenerateAudio(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#00c57c]"></div>
-            </label>
-          </div>
+          )}
 
           {/* Feedback messages */}
           {error && (
@@ -265,7 +319,7 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
           {successCount !== null && (
             <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[#00c57c] text-xs flex items-center gap-2">
               <Check className="w-4 h-4 shrink-0" />
-              <span>{successCount} cards importados com sucesso para o seu Isla!</span>
+              <span>{successCount} cards e áudios salvos com sucesso no seu Isla!</span>
             </div>
           )}
 
@@ -285,7 +339,7 @@ export default function ImportJSONModal({ isOpen, onClose, onImport }) {
               className="px-5 py-2.5 rounded-xl font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-950/40 transition active:scale-95 disabled:opacity-50 flex items-center gap-2"
             >
               {isProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
-              <span>{isProcessing ? 'Importando e Gerando Áudios...' : 'Importar Cards & Áudios'}</span>
+              <span>{isProcessing ? 'Gerando e Salvando...' : 'Iniciar Importação'}</span>
             </button>
           </div>
 

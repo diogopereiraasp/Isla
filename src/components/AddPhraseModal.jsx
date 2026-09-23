@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Tag, Plus, Trash2, Upload, Sparkles, Loader2, Volume2 } from 'lucide-react';
+import { X, Tag, Plus, Trash2, Upload, Sparkles, Loader2, Volume2, Play, Wand2 } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
-import { generateTTSAudioBlob } from '../services/audioService';
+import { generateElevenLabsAudioBlob, generateTTSAudioBlob, DEFAULT_ELEVENLABS_VOICES } from '../services/audioService';
 
 export default function AddPhraseModal({
   isOpen,
@@ -16,8 +16,9 @@ export default function AddPhraseModal({
   const [tagInput, setTagInput] = useState('');
   const [audioBlob, setAudioBlob] = useState(null);
   const [fileName, setFileName] = useState('');
-  const [audioMode, setAudioMode] = useState('upload'); // 'upload' | 'record' | 'generate'
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [audioMode, setAudioMode] = useState('upload'); // 'upload' | 'record'
+  const [isGeneratingEleven, setIsGeneratingEleven] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState('21m00Tcm4TlvDq8ikWAM'); // Rachel
 
   // Pre-fill on open/edit
   React.useEffect(() => {
@@ -26,7 +27,7 @@ export default function AddPhraseModal({
       setNative(editingPhrase.native || '');
       setTags(Array.isArray(editingPhrase.tags) ? editingPhrase.tags : []);
       setAudioBlob(editingPhrase.audioBlob || null);
-      setFileName(editingPhrase.audioBlob ? 'Áudio Existente' : '');
+      setFileName(editingPhrase.audioBlob ? 'Áudio Anexado ao Card' : '');
     } else {
       setTarget('');
       setNative('');
@@ -82,26 +83,45 @@ export default function AddPhraseModal({
     }
   };
 
-  const handleGenerateAI = async () => {
+  const handleGenerateElevenLabs = async () => {
     if (!target.trim()) {
       alert("Digite a frase na Frente antes de gerar o áudio.");
       return;
     }
 
     try {
-      setIsGeneratingAudio(true);
-      const blob = await generateTTSAudioBlob(target.trim(), 'en');
+      setIsGeneratingEleven(true);
+      const blob = await generateElevenLabsAudioBlob(target.trim(), '', selectedVoice);
       setAudioBlob(blob);
-      setFileName(`Áudio Nativo Gerado (${Math.round(blob.size / 1024)} KB)`);
+      setFileName(`Áudio ElevenLabs (${Math.round(blob.size / 1024)} KB)`);
       
-      // Play quick preview
+      // Play preview
       const previewUrl = URL.createObjectURL(blob);
-      new Audio(previewUrl).play();
+      const audio = new Audio(previewUrl);
+      audio.play().catch(e => console.warn("Preview error:", e));
     } catch (err) {
-      console.error(err);
-      alert("Não foi possível baixar o MP3 no momento, usaremos a voz do sistema offline.");
+      console.warn("Erro no ElevenLabs, tentando fallback:", err);
+      try {
+        const fbBlob = await generateTTSAudioBlob(target.trim(), 'en');
+        setAudioBlob(fbBlob);
+        setFileName(`Áudio Nativo (${Math.round(fbBlob.size / 1024)} KB)`);
+        const previewUrl = URL.createObjectURL(fbBlob);
+        new Audio(previewUrl).play();
+      } catch (fbErr) {
+        alert("Não foi possível gerar áudio no momento.");
+      }
     } finally {
-      setIsGeneratingAudio(false);
+      setIsGeneratingEleven(false);
+    }
+  };
+
+  const playCurrentAudio = () => {
+    if (!audioBlob) return;
+    try {
+      const url = typeof audioBlob === 'string' ? audioBlob : URL.createObjectURL(audioBlob);
+      new Audio(url).play();
+    } catch (err) {
+      console.warn("Erro ao reproduzir áudio:", err);
     }
   };
 
@@ -156,20 +176,23 @@ export default function AddPhraseModal({
               <label className="font-semibold text-slate-300">
                 Frente
               </label>
+              
+              {/* ElevenLabs Generator Button */}
               <button
                 type="button"
-                onClick={handleGenerateAI}
-                disabled={isGeneratingAudio || !target.trim()}
-                className="text-[11px] text-[#00c57c] hover:text-emerald-300 flex items-center gap-1 font-semibold disabled:opacity-40 transition"
+                onClick={handleGenerateElevenLabs}
+                disabled={isGeneratingEleven || !target.trim()}
+                className="text-[11px] text-[#00c57c] hover:text-emerald-300 flex items-center gap-1 font-semibold disabled:opacity-40 transition active:scale-95"
               >
-                {isGeneratingAudio ? (
+                {isGeneratingEleven ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Wand2 className="w-3.5 h-3.5" />
                 )}
-                <span>{isGeneratingAudio ? 'Gerando...' : '⚡ Gerar Áudio Nativo'}</span>
+                <span>{isGeneratingEleven ? 'Gerando...' : 'Gerar com ElevenLabs'}</span>
               </button>
             </div>
+
             <textarea
               required
               rows={2}
@@ -266,11 +289,11 @@ export default function AddPhraseModal({
             )}
           </div>
 
-          {/* Audio Input Tabs */}
-          <div className="space-y-1.5 pt-1">
+          {/* Audio Section with Attached Audio Preview and Player */}
+          <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between">
               <label className="font-semibold text-slate-300">
-                Áudio do Card <span className="text-slate-500 font-normal">(Opcional)</span>
+                Áudio do Card
               </label>
               
               <div className="flex items-center bg-[#0a0f1d] p-0.5 rounded-lg border border-[#1f2b45] text-[11px]">
@@ -291,26 +314,50 @@ export default function AddPhraseModal({
               </div>
             </div>
 
-            {/* Current Audio Status */}
-            {audioBlob && (
-              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between text-xs text-emerald-400">
-                <span className="flex items-center gap-1.5 font-medium truncate">
-                  <Volume2 className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">{fileName || "Áudio anexado"}</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAudioBlob(null);
-                    setFileName('');
-                  }}
-                  className="text-[11px] text-slate-400 hover:text-rose-400 underline shrink-0 ml-2"
-                >
-                  Remover
-                </button>
-              </div>
-            )}
+            {/* Attached Audio Player Box */}
+            {audioBlob ? (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl flex items-center justify-between gap-3 animate-fadeIn">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-[#00c57c] flex items-center justify-center shrink-0">
+                    <Volume2 className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-emerald-300 truncate">
+                      {fileName || "Áudio anexado"}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      Gravado permanentemente no card
+                    </p>
+                  </div>
+                </div>
 
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={playCurrentAudio}
+                    className="p-2 bg-[#00c57c] hover:bg-[#00af6e] text-white rounded-xl shadow-md transition active:scale-95 flex items-center gap-1 text-xs font-semibold"
+                    title="Testar Áudio"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Ouvir</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAudioBlob(null);
+                      setFileName('');
+                    }}
+                    className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800/60 rounded-xl transition"
+                    title="Remover áudio deste card"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Upload or Record Area */}
             {audioMode === 'upload' ? (
               <div className="border border-dashed border-slate-700 hover:border-slate-500 rounded-xl sm:rounded-2xl p-3.5 text-center bg-[#0a0f1d]/70 cursor-pointer relative transition">
                 <input
@@ -322,7 +369,7 @@ export default function AddPhraseModal({
                 <div className="flex flex-col items-center justify-center gap-1 text-slate-400">
                   <Upload className="w-4 h-4 text-[#00c57c]" />
                   <span className="font-medium text-slate-200 text-xs">
-                    {fileName || "Clique ou selecione um áudio (.mp3, .wav)"}
+                    {audioBlob ? "Substituir por outro arquivo de áudio" : "Clique ou selecione um áudio (.mp3, .wav)"}
                   </span>
                 </div>
               </div>

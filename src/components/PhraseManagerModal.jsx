@@ -162,11 +162,11 @@ export default function PhraseManagerModal({
 
                 <div className="flex items-center gap-0.5 shrink-0">
                   <a
-                    href={`https://youglish.com/pronounce/${encodeURIComponent(phrase.target.replace(/\[sound:[^\]]+\]/gi, '').replace(/[^\w\s'?]/gi, ' ').trim().replace(/\s+/g, '_'))}/english`}
+                    href={`https://www.playphrase.me/#/search?q=${encodeURIComponent(phrase.target.replace(/\[sound:[^\]]+\]/gi, '').replace(/[^\w\s'?]/gi, ' ').trim())}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg transition hover:bg-rose-500/10"
-                    title="Ver exemplos reais no YouGlish"
+                    title="Ver cenas reais no PlayPhrase.me (Sem limites)"
                   >
                     <Video className="w-3.5 h-3.5" />
                   </a>

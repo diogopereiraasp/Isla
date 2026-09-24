@@ -6,7 +6,7 @@ export function usePhrases() {
   const [phrases, setPhrases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState('all');
-  const [dueOnlyFilter, setDueOnlyFilter] = useState(false);
+  const [dueOnlyFilter, setDueOnlyFilter] = useState(true); // Abre por padrão nas revisões de Hoje
 
   useEffect(() => {
     loadPhrases();

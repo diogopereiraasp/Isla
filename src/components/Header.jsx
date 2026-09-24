@@ -1,16 +1,39 @@
-import React from 'react';
-import { Layers, Plus, BarChart3, Download, FileJson } from 'lucide-react';
+import React, { useState } from 'react';
+import { Layers, Plus, BarChart3, Download, FileJson, FolderArchive, Loader2, Check } from 'lucide-react';
+import { exportPhrasesBackup } from '../services/exportService';
 
 export default function Header({
   onOpenAdd,
   onOpenImport,
   onOpenStats,
+  onOpenManager,
+  phrases = [],
   mode,
   setMode,
   dueTodayCount = 0,
   installPrompt,
   onInstall
 }) {
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false);
+
+  const handleExportClick = async () => {
+    if (phrases.length === 0) {
+      alert("Nenhum card para exportar.");
+      return;
+    }
+    try {
+      setIsExporting(true);
+      setExportSuccess(false);
+      await exportPhrasesBackup(phrases);
+      setExportSuccess(true);
+      setTimeout(() => setExportSuccess(false), 3000);
+    } catch (err) {
+      alert("Erro ao exportar backup: " + err.message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
   return (
     <header className="w-full border-b border-[#1f2b45]/80 bg-[#0a0f1d]/95 backdrop-blur-md sticky top-0 z-30">
       <div className="max-w-4xl mx-auto px-3.5 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -105,10 +128,26 @@ export default function Header({
             <button
               onClick={onOpenImport}
               className="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition active:scale-95"
-              title="Importar vários cards via JSON"
+              title="Importar cards / backup via JSON"
             >
               <FileJson className="w-3.5 h-3.5 text-blue-400" />
               <span>Importar JSON</span>
+            </button>
+
+            <button
+              onClick={handleExportClick}
+              disabled={isExporting || phrases.length === 0}
+              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition active:scale-95 disabled:opacity-40"
+              title="Exportar todos os cards e áudios para backup"
+            >
+              {isExporting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+              ) : exportSuccess ? (
+                <Check className="w-3.5 h-3.5 text-[#00c57c]" />
+              ) : (
+                <FolderArchive className="w-3.5 h-3.5 text-emerald-400" />
+              )}
+              <span>{exportSuccess ? 'Backup Salvo!' : 'Exportar Backup'}</span>
             </button>
 
             <button

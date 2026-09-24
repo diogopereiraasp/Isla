@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, FileJson, Upload, Check, AlertCircle, Copy, Music, Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { generateElevenLabsAudioBlob, DEFAULT_ELEVENLABS_VOICES } from '../services/audioService';
+import { parseBackupCards } from '../services/exportService';
 
 const EXAMPLE_JSON = [
   {
@@ -94,6 +95,10 @@ export default function ImportJSONModal({ isOpen, onClose, onImport, existingPhr
       setIsProcessing(true);
       setProgressTotal(cardsArray.length);
       setProgressCurrent(0);
+      setProgressText("Lendo dados e áudios do arquivo...");
+
+      // Converte audioBase64 em Blobs reais se for um arquivo de backup completo
+      cardsArray = await parseBackupCards(cardsArray);
 
       const cleanSoundTag = (str) => String(str || '').replace(/\[sound:[^\]]+\]/gi, '').trim();
       const normalize = (str) => cleanSoundTag(str)

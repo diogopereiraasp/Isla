@@ -151,6 +151,7 @@ export default function App() {
       <Header
         mode={mode}
         setMode={setMode}
+        phrases={phrases}
         dueTodayCount={srsStats.dueToday}
         onOpenAdd={() => {
           setEditingPhrase(null);
@@ -246,6 +247,10 @@ export default function App() {
           setEditingPhrase(phrase);
           setIsManagerOpen(false);
           setIsAddModalOpen(true);
+        }}
+        onOpenImport={() => {
+          setIsManagerOpen(false);
+          setIsImportModalOpen(true);
         }}
       />
 

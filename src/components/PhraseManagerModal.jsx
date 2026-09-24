@@ -1,20 +1,47 @@
 import React, { useState } from 'react';
-import { X, Search, Trash2, Edit3, Volume2, Mic, Clock, Tag, Video } from 'lucide-react';
+import { X, Search, Trash2, Edit3, Volume2, Mic, Clock, Tag, Video, Download, Upload, Loader2, Check } from 'lucide-react';
 import AudioPlayerButton from './AudioPlayerButton';
+import { exportPhrasesBackup } from '../services/exportService';
 
 export default function PhraseManagerModal({
   isOpen,
   onClose,
   phrases,
   onDelete,
-  onEdit
+  onEdit,
+  onOpenImport
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('all');
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(null);
+  const [exportSuccess, setExportSuccess] = useState(false);
 
   if (!isOpen) return null;
 
   const allTags = ['all', ...new Set(phrases.flatMap(p => p.tags || []))].filter(Boolean);
+
+  const handleExportBackup = async () => {
+    if (phrases.length === 0) {
+      alert("Nenhum card para exportar.");
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      setExportSuccess(false);
+      await exportPhrasesBackup(phrases, (current, total) => {
+        setExportProgress({ current, total });
+      });
+      setExportSuccess(true);
+      setTimeout(() => setExportSuccess(false), 3000);
+    } catch (err) {
+      alert("Erro ao exportar backup: " + err.message);
+    } finally {
+      setIsExporting(false);
+      setExportProgress(null);
+    }
+  };
 
   const filtered = phrases.filter(p => {
     const cardTags = p.tags || [];
@@ -157,13 +184,50 @@ export default function PhraseManagerModal({
         </div>
 
         {/* Footer */}
-        <div className="pt-2.5 border-t border-[#1f2b45] flex justify-between items-center text-xs">
-          <span className="text-slate-500 text-[10px] sm:text-xs">
-            Isla Database (Offline)
-          </span>
+        <div className="pt-2.5 border-t border-[#1f2b45] flex flex-col sm:flex-row justify-between items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={handleExportBackup}
+              disabled={isExporting || phrases.length === 0}
+              className="flex-1 sm:flex-initial px-3.5 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-[#00c57c] border border-emerald-500/30 rounded-xl transition font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-40"
+              title="Exportar todos os cards e áudios em um arquivo JSON"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>{exportProgress ? `Exportando (${exportProgress.current}/${exportProgress.total})...` : 'Exportando...'}</span>
+                </>
+              ) : exportSuccess ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Backup Baixado!</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Exportar Backup (.json)</span>
+                </>
+              )}
+            </button>
+
+            {onOpenImport && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenImport();
+                }}
+                className="flex-1 sm:flex-initial px-3.5 py-2 bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 border border-blue-500/30 rounded-xl transition font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-95"
+                title="Importar cards / backup"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Importar JSON</span>
+              </button>
+            )}
+          </div>
+
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition font-medium text-xs active:scale-95"
+            className="w-full sm:w-auto px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition font-medium text-xs active:scale-95 text-center"
           >
             Fechar
           </button>

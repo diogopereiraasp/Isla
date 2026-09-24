@@ -1,6 +1,9 @@
 import React from 'react';
+import { getNextReviewIntervals } from '../services/srs';
 
-export default function SRSFeedbackButtons({ onFeedback, simplified = false }) {
+export default function SRSFeedbackButtons({ onFeedback, phrase, mode = 'learn', simplified = false }) {
+  const intervals = getNextReviewIntervals(phrase, mode);
+
   if (simplified) {
     return (
       <div className="grid grid-cols-2 gap-3 w-full">
@@ -34,7 +37,7 @@ export default function SRSFeedbackButtons({ onFeedback, simplified = false }) {
           <span className="text-[11px] sm:text-xs font-semibold text-slate-200 group-hover:text-rose-300 transition-colors">Errei</span>
           <span className="text-[9px] text-slate-500 group-hover:text-rose-400 font-mono border border-slate-800 group-hover:border-rose-500/30 px-1 py-0.2 rounded">1</span>
         </div>
-        <span className="text-[10px] text-slate-500 group-hover:text-slate-400">10 min</span>
+        <span className="text-[10px] text-slate-400 font-medium">{intervals.again}</span>
       </button>
 
       {/* 2. Difícil */}
@@ -46,7 +49,7 @@ export default function SRSFeedbackButtons({ onFeedback, simplified = false }) {
           <span className="text-[11px] sm:text-xs font-semibold text-slate-200 group-hover:text-amber-300 transition-colors">Difícil</span>
           <span className="text-[9px] text-slate-500 group-hover:text-amber-400 font-mono border border-slate-800 group-hover:border-amber-500/30 px-1 py-0.2 rounded">2</span>
         </div>
-        <span className="text-[10px] text-slate-500 group-hover:text-slate-400">4 horas</span>
+        <span className="text-[10px] text-slate-400 font-medium">{intervals.hard}</span>
       </button>
 
       {/* 3. Bom */}
@@ -58,7 +61,7 @@ export default function SRSFeedbackButtons({ onFeedback, simplified = false }) {
           <span className="text-[11px] sm:text-xs font-semibold text-slate-200 group-hover:text-blue-300 transition-colors">Bom</span>
           <span className="text-[9px] text-slate-500 group-hover:text-blue-400 font-mono border border-slate-800 group-hover:border-blue-500/30 px-1 py-0.2 rounded">3</span>
         </div>
-        <span className="text-[10px] text-slate-500 group-hover:text-slate-400">1-5 dias</span>
+        <span className="text-[10px] text-sky-400 font-medium">{intervals.good}</span>
       </button>
 
       {/* 4. Fácil */}
@@ -70,9 +73,10 @@ export default function SRSFeedbackButtons({ onFeedback, simplified = false }) {
           <span className="text-[11px] sm:text-xs font-semibold text-slate-200 group-hover:text-[#00c57c] transition-colors">Fácil</span>
           <span className="text-[9px] text-slate-500 group-hover:text-[#00c57c] font-mono border border-slate-800 group-hover:border-[#00c57c]/30 px-1 py-0.2 rounded">4</span>
         </div>
-        <span className="text-[10px] text-slate-500 group-hover:text-slate-400">3-7 dias</span>
+        <span className="text-[10px] text-emerald-400 font-medium">{intervals.easy}</span>
       </button>
 
     </div>
   );
 }
+

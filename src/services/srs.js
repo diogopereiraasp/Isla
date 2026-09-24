@@ -48,6 +48,54 @@ export function getCardSRS(card, mode = 'learn') {
 }
 
 /**
+ * Retorna os intervalos exatos que serão aplicados para cada botão de resposta
+ * para este card específico no modo atual.
+ */
+export function getNextReviewIntervals(card, mode = 'learn') {
+  const currentSRS = getCardSRS(card, mode);
+  const { repetitions = 0, easeFactor = 2.0, interval = 0 } = currentSRS;
+
+  // 1. Errei
+  const againLabel = "10 min";
+
+  // 2. Difícil
+  const hardLabel = "4 horas";
+
+  // 3. Bom
+  let goodDays = 1;
+  if (repetitions === 0) {
+    goodDays = 1;
+  } else if (repetitions === 1) {
+    goodDays = 2;
+  } else if (repetitions === 2) {
+    goodDays = 3;
+  } else if (repetitions === 3) {
+    goodDays = 5;
+  } else {
+    goodDays = Math.min(MAX_INTERVAL_DAYS, Math.round(interval * easeFactor));
+  }
+  const goodLabel = `${goodDays} ${goodDays === 1 ? 'dia' : 'dias'}`;
+
+  // 4. Fácil
+  let easyDays = 3;
+  if (repetitions === 0) {
+    easyDays = 3;
+  } else if (repetitions === 1) {
+    easyDays = 7;
+  } else {
+    easyDays = Math.min(MAX_INTERVAL_DAYS, Math.round(interval * (easeFactor + 0.2)));
+  }
+  const easyLabel = `${easyDays} ${easyDays === 1 ? 'dia' : 'dias'}`;
+
+  return {
+    again: againLabel,
+    hard: hardLabel,
+    good: goodLabel,
+    easy: easyLabel
+  };
+}
+
+/**
  * Calcula a próxima revisão espaçada de forma totalmente independente por modo ('learn' ou 'active')
  */
 export function calculateSRS(card, grade, mode = 'learn') {

@@ -251,7 +251,7 @@ export default function Flashcard({
         ) : (
           <div className="space-y-3">
             {/* Rating Buttons with numeric shortcuts (1, 2, 3, 4) */}
-            <SRSFeedbackButtons onFeedback={onFeedback} simplified={false} />
+            <SRSFeedbackButtons onFeedback={onFeedback} phrase={phrase} mode={mode} simplified={false} />
 
             {/* Navigation buttons for Aprender mode */}
             {isLearnMode && (

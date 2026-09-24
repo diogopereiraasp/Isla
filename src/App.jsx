@@ -200,6 +200,11 @@ export default function App() {
               onFeedback={onSRSFeedback}
               onNext={handleNext}
               onPrev={handlePrev}
+              hasFiltersActive={dueOnlyFilter || selectedTag !== 'all'}
+              onClearFilters={() => {
+                setDueOnlyFilter(false);
+                setSelectedTag('all');
+              }}
               onOpenAdd={() => {
                 setEditingPhrase(null);
                 setIsAddModalOpen(true);

@@ -13,27 +13,44 @@ export default function Flashcard({
   onFeedback,
   onNext,
   onPrev,
-  onOpenAdd
+  onOpenAdd,
+  hasFiltersActive = false,
+  onClearFilters
 }) {
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedRevealed, setCopiedRevealed] = useState(false);
 
   if (!phrase) {
     return (
-      <div className="w-full max-w-2xl bg-[#131b2e] rounded-2xl sm:rounded-3xl border border-[#1f2b45] p-6 sm:p-12 text-center card-glow my-auto">
+      <div className="w-full max-w-2xl bg-[#131b2e] rounded-2xl sm:rounded-3xl border border-[#1f2b45] p-6 sm:p-12 text-center card-glow my-auto animate-fadeIn">
         <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mx-auto flex items-center justify-center text-[#00c57c] mb-3.5">
           <Sparkles className="w-6 h-6 sm:w-7 sm:h-7" />
         </div>
-        <h3 className="text-lg sm:text-xl font-bold text-white mb-2">Seu Isla está pronto!</h3>
+        <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
+          {hasFiltersActive ? "Nenhum card com esse filtro" : "Seu Isla está pronto!"}
+        </h3>
         <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto mb-5 sm:mb-6">
-          Nenhum card pendente para esta seleção. Adicione frases com áudio e tags para praticar.
+          {hasFiltersActive 
+            ? "Você filtrou por tag ou pendências de hoje e não há cards correspondentes nesta combinação." 
+            : "Nenhum card cadastrado ainda. Adicione frases com áudio e tags para praticar."
+          }
         </p>
-        <button
-          onClick={onOpenAdd}
-          className="w-full sm:w-auto px-5 py-3 bg-[#00c57c] hover:bg-[#00af6e] text-white font-semibold rounded-xl sm:rounded-2xl text-xs sm:text-sm shadow-lg shadow-emerald-950/40 transition active:scale-95"
-        >
-          + Adicionar Primeiro Card
-        </button>
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          {hasFiltersActive && onClearFilters && (
+            <button
+              onClick={onClearFilters}
+              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold rounded-xl sm:rounded-2xl text-xs sm:text-sm transition active:scale-95"
+            >
+              Ver Todas as Frases
+            </button>
+          )}
+          <button
+            onClick={onOpenAdd}
+            className="px-5 py-2.5 bg-[#00c57c] hover:bg-[#00af6e] text-white font-semibold rounded-xl sm:rounded-2xl text-xs sm:text-sm shadow-lg shadow-emerald-950/40 transition active:scale-95"
+          >
+            + Adicionar Novo Card
+          </button>
+        </div>
       </div>
     );
   }

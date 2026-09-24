@@ -19,10 +19,13 @@ export default function IslandFilterBar({
         
         {/* Toggle Due Today button */}
         <button
-          onClick={onToggleDueOnly}
-          className={`px-2.5 py-1 rounded-lg text-[11px] sm:text-xs transition flex items-center gap-1 shrink-0 active:scale-95 ${
+          onClick={() => {
+            onToggleDueOnly();
+            onSelectTag('all');
+          }}
+          className={`px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs transition-all whitespace-nowrap flex items-center gap-1 shrink-0 active:scale-95 ${
             dueOnly
-              ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40'
+              ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40 shadow-sm'
               : 'text-slate-400 hover:text-slate-200 bg-[#131b2e] border border-[#1f2b45]'
           }`}
         >

@@ -71,12 +71,27 @@ export async function exportPhrasesBackup(phrases = [], onProgress) {
       native: p.native,
       tags: p.tags || [],
       audioBase64: audioBase64,
+      // Root / Learn SRS
       interval: p.interval || 1,
       repetitions: p.repetitions || 0,
       easeFactor: p.easeFactor || 2.5,
       dueDate: p.dueDate || new Date().toISOString(),
       lastReviewed: p.lastReviewed || null,
-      history: p.history || []
+      history: p.history || [],
+      // Learn mode SRS
+      learnInterval: p.learnInterval ?? p.interval ?? 1,
+      learnRepetitions: p.learnRepetitions ?? p.repetitions ?? 0,
+      learnEaseFactor: p.learnEaseFactor ?? p.easeFactor ?? 2.5,
+      learnDueDate: p.learnDueDate ?? p.dueDate ?? new Date().toISOString(),
+      learnLastReviewed: p.learnLastReviewed ?? p.lastReviewed ?? null,
+      learnHistory: p.learnHistory ?? p.history ?? [],
+      // Active mode SRS
+      activeInterval: p.activeInterval ?? 0,
+      activeRepetitions: p.activeRepetitions ?? 0,
+      activeEaseFactor: p.activeEaseFactor ?? 2.0,
+      activeDueDate: p.activeDueDate ?? null,
+      activeLastReviewed: p.activeLastReviewed ?? null,
+      activeHistory: p.activeHistory ?? []
     });
   }
 

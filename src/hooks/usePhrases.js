@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getAllPhrases, savePhrase, deletePhrase, importManyPhrases } from '../services/db';
 import { calculateSRS, isCardDue } from '../services/srs';
 
-export function usePhrases() {
+export function usePhrases(mode = 'learn') {
   const [phrases, setPhrases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState('all');
@@ -100,12 +100,27 @@ export function usePhrases() {
         tags,
         hasAudio: !!matchedAudioBlob,
         audioBlob: matchedAudioBlob,
+        // Root / Aprender SRS
         interval: card.interval || 1,
         repetitions: card.repetitions || 0,
         easeFactor: card.easeFactor || 2.5,
         dueDate: card.dueDate || new Date().toISOString(),
         lastReviewed: card.lastReviewed || null,
-        history: card.history || []
+        history: card.history || [],
+        // Learn SRS
+        learnInterval: card.learnInterval ?? card.interval ?? 1,
+        learnRepetitions: card.learnRepetitions ?? card.repetitions ?? 0,
+        learnEaseFactor: card.learnEaseFactor ?? card.easeFactor ?? 2.5,
+        learnDueDate: card.learnDueDate ?? card.dueDate ?? new Date().toISOString(),
+        learnLastReviewed: card.learnLastReviewed ?? card.lastReviewed ?? null,
+        learnHistory: card.learnHistory ?? card.history ?? [],
+        // Active SRS
+        activeInterval: card.activeInterval ?? 0,
+        activeRepetitions: card.activeRepetitions ?? 0,
+        activeEaseFactor: card.activeEaseFactor ?? 2.0,
+        activeDueDate: card.activeDueDate ?? null,
+        activeLastReviewed: card.activeLastReviewed ?? null,
+        activeHistory: card.activeHistory ?? []
       });
     }
 
@@ -129,12 +144,27 @@ export function usePhrases() {
       target: phraseData.target,
       hasAudio: !!phraseData.audioBlob,
       audioBlob: phraseData.audioBlob || null,
+      // Root / Learn SRS
       interval: phraseData.interval || 1,
       repetitions: phraseData.repetitions || 0,
       easeFactor: phraseData.easeFactor || 2.5,
       dueDate: phraseData.dueDate || new Date().toISOString(),
       lastReviewed: phraseData.lastReviewed || null,
-      history: phraseData.history || []
+      history: phraseData.history || [],
+      // Learn mode SRS
+      learnInterval: phraseData.learnInterval ?? phraseData.interval ?? 1,
+      learnRepetitions: phraseData.learnRepetitions ?? phraseData.repetitions ?? 0,
+      learnEaseFactor: phraseData.learnEaseFactor ?? phraseData.easeFactor ?? 2.5,
+      learnDueDate: phraseData.learnDueDate ?? phraseData.dueDate ?? new Date().toISOString(),
+      learnLastReviewed: phraseData.learnLastReviewed ?? phraseData.lastReviewed ?? null,
+      learnHistory: phraseData.learnHistory ?? phraseData.history ?? [],
+      // Active mode SRS
+      activeInterval: phraseData.activeInterval ?? 0,
+      activeRepetitions: phraseData.activeRepetitions ?? 0,
+      activeEaseFactor: phraseData.activeEaseFactor ?? 2.0,
+      activeDueDate: phraseData.activeDueDate ?? null,
+      activeLastReviewed: phraseData.activeLastReviewed ?? null,
+      activeHistory: phraseData.activeHistory ?? []
     };
 
     await savePhrase(phrase);
@@ -152,18 +182,18 @@ export function usePhrases() {
     setPhrases(prev => prev.filter(p => p.id !== id));
   };
 
-  const handleSRSFeedback = async (card, grade) => {
-    const updatedCard = calculateSRS(card, grade);
+  const handleSRSFeedback = async (card, grade, feedbackMode = mode) => {
+    const updatedCard = calculateSRS(card, grade, feedbackMode);
     await savePhrase(updatedCard);
     setPhrases(prev => prev.map(p => p.id === updatedCard.id ? updatedCard : p));
     return updatedCard;
   };
 
-  // Filtragem por Tags
+  // Filtragem por Tags e Modo Ativo
   const filteredPhrases = phrases.filter(p => {
     const cardTags = p.tags || [];
     const matchesTag = selectedTag === 'all' || cardTags.includes(selectedTag);
-    const matchesDue = dueOnlyFilter ? isCardDue(p) : true;
+    const matchesDue = dueOnlyFilter ? isCardDue(p, mode) : true;
     return matchesTag && matchesDue;
   });
 
@@ -188,3 +218,4 @@ export function usePhrases() {
     refreshPhrases: loadPhrases
   };
 }
+

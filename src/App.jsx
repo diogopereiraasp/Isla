@@ -12,6 +12,8 @@ import { getSRSStats } from './services/srs';
 import { playPhraseAudio } from './services/audioService';
 
 export default function App() {
+  const [mode, setMode] = useState('learn'); // 'learn' | 'active' | 'srs'
+
   const {
     phrases,
     filteredPhrases,
@@ -25,9 +27,7 @@ export default function App() {
     removePhrase,
     handleSRSFeedback,
     importPhrasesBatch
-  } = usePhrases();
-
-  const [mode, setMode] = useState('learn'); // 'learn' | 'active' | 'srs'
+  } = usePhrases(mode);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
 
@@ -67,7 +67,7 @@ export default function App() {
   }, [selectedTag, dueOnlyFilter, mode]);
 
   const currentPhrase = filteredPhrases[currentIndex] || null;
-  const srsStats = getSRSStats(phrases);
+  const srsStats = getSRSStats(phrases, mode);
 
   // Reveal handler
   const handleReveal = () => {
@@ -110,7 +110,7 @@ export default function App() {
     }
 
     setIsRevealed(false);
-    await handleSRSFeedback(currentPhrase, grade);
+    await handleSRSFeedback(currentPhrase, grade, mode);
   };
 
   // Keyboard navigation
@@ -282,6 +282,7 @@ export default function App() {
         isOpen={isStatsOpen}
         onClose={() => setIsStatsOpen(false)}
         phrases={phrases}
+        activeMode={mode}
       />
 
       <ImportJSONModal

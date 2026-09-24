@@ -10,8 +10,49 @@
 
 const MAX_INTERVAL_DAYS = 15; // Teto máximo
 
-export function calculateSRS(card, grade) {
-  let { repetitions = 0, easeFactor = 2.0, interval = 0 } = card;
+/**
+ * Obtém os dados de repetição espaçada específicos para o modo atual ('learn' ou 'active')
+ */
+export function getCardSRS(card, mode = 'learn') {
+  if (!card) {
+    return {
+      repetitions: 0,
+      easeFactor: 2.0,
+      interval: 0,
+      dueDate: null,
+      lastReviewed: null,
+      history: []
+    };
+  }
+
+  if (mode === 'active') {
+    return {
+      repetitions: card.activeRepetitions ?? 0,
+      easeFactor: card.activeEaseFactor ?? 2.0,
+      interval: card.activeInterval ?? 0,
+      dueDate: card.activeDueDate ?? null,
+      lastReviewed: card.activeLastReviewed ?? null,
+      history: card.activeHistory ?? []
+    };
+  }
+
+  // mode === 'learn' (com fallback retrocompatível para propriedades na raiz)
+  return {
+    repetitions: card.learnRepetitions ?? card.repetitions ?? 0,
+    easeFactor: card.learnEaseFactor ?? card.easeFactor ?? 2.0,
+    interval: card.learnInterval ?? card.interval ?? 0,
+    dueDate: card.learnDueDate ?? card.dueDate ?? null,
+    lastReviewed: card.learnLastReviewed ?? card.lastReviewed ?? null,
+    history: card.learnHistory ?? card.history ?? []
+  };
+}
+
+/**
+ * Calcula a próxima revisão espaçada de forma totalmente independente por modo ('learn' ou 'active')
+ */
+export function calculateSRS(card, grade, mode = 'learn') {
+  const currentSRS = getCardSRS(card, mode);
+  let { repetitions = 0, easeFactor = 2.0, interval = 0 } = currentSRS;
 
   const now = new Date();
   let nextDate = new Date(now);
@@ -57,52 +98,91 @@ export function calculateSRS(card, grade) {
     nextDate.setDate(now.getDate() + interval);
   }
 
-  return {
-    ...card,
+  const updatedSRS = {
     repetitions,
     easeFactor: Number(easeFactor.toFixed(2)),
     interval: Number(interval.toFixed(2)),
     dueDate: nextDate.toISOString(),
     lastReviewed: now.toISOString(),
     history: [
-      ...(card.history || []),
+      ...(currentSRS.history || []),
       {
         date: now.toISOString(),
         grade,
-        interval
+        interval: Number(interval.toFixed(2)),
+        mode
       }
     ]
   };
+
+  if (mode === 'active') {
+    return {
+      ...card,
+      activeRepetitions: updatedSRS.repetitions,
+      activeEaseFactor: updatedSRS.easeFactor,
+      activeInterval: updatedSRS.interval,
+      activeDueDate: updatedSRS.dueDate,
+      activeLastReviewed: updatedSRS.lastReviewed,
+      activeHistory: updatedSRS.history
+    };
+  }
+
+  // mode === 'learn'
+  return {
+    ...card,
+    // Propriedades retrocompatíveis na raiz
+    repetitions: updatedSRS.repetitions,
+    easeFactor: updatedSRS.easeFactor,
+    interval: updatedSRS.interval,
+    dueDate: updatedSRS.dueDate,
+    lastReviewed: updatedSRS.lastReviewed,
+    history: updatedSRS.history,
+    // Propriedades explícitas de Aprender
+    learnRepetitions: updatedSRS.repetitions,
+    learnEaseFactor: updatedSRS.easeFactor,
+    learnInterval: updatedSRS.interval,
+    learnDueDate: updatedSRS.dueDate,
+    learnLastReviewed: updatedSRS.lastReviewed,
+    learnHistory: updatedSRS.history
+  };
 }
 
-export function isCardDue(card) {
-  if (!card.dueDate) return true;
-  const due = new Date(card.dueDate);
+/**
+ * Verifica se o card está pendente para o modo especificado
+ */
+export function isCardDue(card, mode = 'learn') {
+  const srs = getCardSRS(card, mode);
+  if (!srs.dueDate) return true; // Nunca agendado neste modo -> pendente para estudo
+  const due = new Date(srs.dueDate);
   const now = new Date();
   return due <= now;
 }
 
-export function getSRSStats(phrases = []) {
-  let newCount = 0;       // Nunca revisados (repetitions === 0 e sem histórico)
+/**
+ * Calcula estatísticas do deck para o modo atual
+ */
+export function getSRSStats(phrases = [], mode = 'learn') {
+  let newCount = 0;       // Nunca revisados no modo (repetitions === 0 e sem histórico)
   let learningCount = 0;  // Em aprendizado rápido (< 3 dias de intervalo)
   let reviewingCount = 0; // Em consolidação (3 a 14 dias de intervalo)
   let masteredCount = 0;  // Automatizados / Fluentes (intervalo >= 15 dias)
-  let dueCount = 0;       // Pendentes para hoje
+  let dueCount = 0;       // Pendentes para hoje no modo
   let withAudioCount = 0; // Cards com áudio anexado
 
   let totalReviews = 0;
   let successfulReviews = 0;
 
   phrases.forEach(p => {
-    const reps = p.repetitions || 0;
-    const interval = p.interval || 0;
-    const history = p.history || [];
+    const srs = getCardSRS(p, mode);
+    const reps = srs.repetitions || 0;
+    const interval = srs.interval || 0;
+    const history = srs.history || [];
 
     if (p.audioBlob || p.hasAudio) {
       withAudioCount++;
     }
 
-    if (isCardDue(p)) {
+    if (isCardDue(p, mode)) {
       dueCount++;
     }
 
@@ -132,6 +212,7 @@ export function getSRSStats(phrases = []) {
 
   return {
     total,
+    mode,
     newCards: newCount,
     learning: learningCount,
     reviewing: reviewingCount,
@@ -144,3 +225,4 @@ export function getSRSStats(phrases = []) {
     masteredPercentage
   };
 }
+

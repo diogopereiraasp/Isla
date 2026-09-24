@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Search, Trash2, Edit3, Volume2, Mic, Clock, Tag, Video, Download, Upload, Loader2, Check } from 'lucide-react';
 import AudioPlayerButton from './AudioPlayerButton';
 import { exportPhrasesBackup } from '../services/exportService';
+import { getCardSRS } from '../services/srs';
 
 export default function PhraseManagerModal({
   isOpen,
@@ -136,11 +137,24 @@ export default function PhraseManagerModal({
                       </span>
                     ) : null}
                     
-                    {phrase.interval > 0 && (
-                      <span className="text-[9px] text-slate-400 flex items-center gap-1">
-                        <Clock className="w-2.5 h-2.5" /> {phrase.interval < 1 ? 'hoje' : `${Math.round(phrase.interval)}d`}
-                      </span>
-                    )}
+                    {(() => {
+                      const lSrs = getCardSRS(phrase, 'learn');
+                      const aSrs = getCardSRS(phrase, 'active');
+                      return (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {lSrs.interval > 0 && (
+                            <span className="text-[9px] text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20 flex items-center gap-1" title="Intervalo no modo Aprender">
+                              <Clock className="w-2.5 h-2.5" /> Aprender: {lSrs.interval < 1 ? 'hoje' : `${Math.round(lSrs.interval)}d`}
+                            </span>
+                          )}
+                          {aSrs.interval > 0 && (
+                            <span className="text-[9px] text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20 flex items-center gap-1" title="Intervalo no modo Recordação Ativa">
+                              <Clock className="w-2.5 h-2.5" /> Recordação: {aSrs.interval < 1 ? 'hoje' : `${Math.round(aSrs.interval)}d`}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <p className="font-semibold text-slate-200 truncate text-xs">{phrase.target}</p>
                   <p className="text-slate-400 text-[11px] truncate">{phrase.native}</p>

@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Trophy, Calendar, Sparkles, BookOpen, Clock, Zap, Volume2, Target, Flame } from 'lucide-react';
 import { getSRSStats } from '../services/srs';
 
-export default function StatsModal({ isOpen, onClose, phrases = [] }) {
+export default function StatsModal({ isOpen, onClose, phrases = [], activeMode = 'learn' }) {
+  const [statsMode, setStatsMode] = useState(activeMode);
+
   if (!isOpen) return null;
 
-  const stats = getSRSStats(phrases);
+  const stats = getSRSStats(phrases, statsMode);
 
   // Percentuais para a barra de distribuição
   const total = stats.total || 1;
@@ -29,7 +31,7 @@ export default function StatsModal({ isOpen, onClose, phrases = [] }) {
                 Estatísticas &amp; Progresso
               </h3>
               <p className="text-[11px] text-slate-400">
-                Acompanhamento em tempo real da sua memória
+                Acompanhamento individual por modo de estudo
               </p>
             </div>
           </div>
@@ -39,6 +41,30 @@ export default function StatsModal({ isOpen, onClose, phrases = [] }) {
             className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition active:scale-95"
           >
             <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Mode Selector Tabs in Stats Modal */}
+        <div className="grid grid-cols-2 p-1 bg-[#0a0f1d] border border-[#1f2b45] rounded-xl text-xs font-semibold">
+          <button
+            onClick={() => setStatsMode('learn')}
+            className={`py-1.5 rounded-lg transition-all text-center ${
+              statsMode === 'learn'
+                ? 'bg-slate-800 text-[#00c57c] shadow-sm font-bold'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Modo Aprender
+          </button>
+          <button
+            onClick={() => setStatsMode('active')}
+            className={`py-1.5 rounded-lg transition-all text-center ${
+              statsMode === 'active'
+                ? 'bg-slate-800 text-[#00c57c] shadow-sm font-bold'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Recordação Ativa
           </button>
         </div>
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, ArrowLeft, ArrowRight, Sparkles, Clock, Tag, Copy, Check, Video, ExternalLink } from 'lucide-react';
 import AudioPlayerButton from './AudioPlayerButton';
 import SRSFeedbackButtons from './SRSFeedbackButtons';
+import { getCardSRS } from '../services/srs';
 
 export default function Flashcard({
   phrase,
@@ -59,6 +60,7 @@ export default function Flashcard({
   const isActiveMode = mode === 'active';
   const isSRSMode = mode === 'srs';
   const tags = phrase.tags || [];
+  const cardSRS = getCardSRS(phrase, mode);
 
   const handleCopyPrompt = (e) => {
     e.stopPropagation();
@@ -134,10 +136,10 @@ export default function Flashcard({
               </span>
             ))
           ) : null}
-          {phrase.interval > 0 && (
+          {cardSRS.interval > 0 && (
             <span className="flex items-center gap-1 text-[10px] text-emerald-400/90 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20 whitespace-nowrap">
               <Clock className="w-2.5 h-2.5" />
-              {phrase.interval < 1 ? 'hoje' : `${Math.round(phrase.interval)}d`}
+              {cardSRS.interval < 1 ? 'hoje' : `${Math.round(cardSRS.interval)}d`}
             </span>
           )}
         </div>

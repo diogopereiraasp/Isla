@@ -117,6 +117,12 @@ export default function App() {
         } else if (currentPhrase) {
           playPhraseAudio(currentPhrase);
         }
+      } else if (e.code === 'KeyR' || e.code === 'KeyA') {
+        // Pressionar 'R' (Repeat/Replay) ou 'A' (Áudio) toca o áudio a qualquer momento
+        e.preventDefault();
+        if (currentPhrase) {
+          playPhraseAudio(currentPhrase);
+        }
       } else if (e.code === 'ArrowRight') {
         e.preventDefault();
         handleNext();
@@ -207,6 +213,10 @@ export default function App() {
               <span className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-300 font-mono">Espaço</kbd>
                 <span>{isRevealed ? "Tocar Áudio" : "Ver Resultado"}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-300 font-mono">R</kbd>
+                <span>Tocar Áudio</span>
               </span>
               <span className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-300 font-mono">← / →</kbd>

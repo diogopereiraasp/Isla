@@ -63,9 +63,6 @@ export default function AudioPlayerButton({ phrase, label, className = '', varia
       <kbd className="hidden sm:inline-block px-1 py-0.2 bg-slate-900/80 border border-slate-700/70 rounded text-[9px] text-slate-400 font-mono">
         R
       </kbd>
-      {hasCustomAudio && (
-        <span className="w-1.5 h-1.5 rounded-full bg-[#00c57c] animate-pulse"></span>
-      )}
     </button>
   );
 }

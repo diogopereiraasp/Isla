@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layers, Plus, BarChart3, Download, FileJson, FolderArchive, Loader2, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Layers, Plus, BarChart3, Download, FileJson, FolderArchive, Loader2, Check, MoreVertical, Database } from 'lucide-react';
 import { exportPhrasesBackup } from '../services/exportService';
 
 export default function Header({
@@ -14,8 +14,21 @@ export default function Header({
   installPrompt,
   onInstall
 }) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close dropdown menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleExportClick = async () => {
     if (phrases.length === 0) {
@@ -27,145 +40,155 @@ export default function Header({
       setExportSuccess(false);
       await exportPhrasesBackup(phrases);
       setExportSuccess(true);
-      setTimeout(() => setExportSuccess(false), 3000);
+      setTimeout(() => {
+        setExportSuccess(false);
+        setIsMenuOpen(false);
+      }, 2000);
     } catch (err) {
       alert("Erro ao exportar backup: " + err.message);
     } finally {
       setIsExporting(false);
     }
   };
-  return (
-    <header className="w-full border-b border-[#1f2b45]/80 bg-[#0a0f1d]/95 backdrop-blur-md sticky top-0 z-30">
-      <div className="max-w-4xl mx-auto px-3.5 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
-        
-        {/* Brand & Mobile Actions Row */}
-        <div className="flex items-center justify-between w-full sm:w-auto">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#00c57c] to-emerald-800 flex items-center justify-center text-white shadow-lg shadow-emerald-950/40">
-              <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <h1 className="text-base sm:text-lg font-bold tracking-tight text-white leading-tight">
-              Isla
-            </h1>
-          </div>
 
-          {/* Mobile Right Controls */}
-          <div className="flex items-center gap-1.5 sm:hidden">
-            {installPrompt && (
-              <button
-                onClick={onInstall}
-                className="p-2 bg-emerald-500/15 text-[#00c57c] rounded-xl border border-emerald-500/30 active:scale-95"
-                title="Instalar App"
-              >
-                <Download className="w-4 h-4" />
-              </button>
-            )}
-            <button
-              onClick={onOpenImport}
-              className="p-2 bg-slate-800 text-blue-400 rounded-xl border border-slate-700 active:scale-95"
-              title="Importar JSON"
-            >
-              <FileJson className="w-4 h-4" />
-            </button>
-            <button
-              onClick={onOpenStats}
-              className="p-2 bg-slate-800 text-slate-300 rounded-xl border border-slate-700 active:scale-95"
-              title="Estatísticas"
-            >
-              <BarChart3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={onOpenAdd}
-              className="px-3 py-1.5 bg-[#00c57c] hover:bg-[#00af6e] text-white text-xs font-semibold rounded-xl flex items-center gap-1 shadow-md active:scale-95 transition"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Novo</span>
-            </button>
+  return (
+    <header className="w-full border-b border-[#1f2b45]/70 bg-[#0a0f1d]/90 backdrop-blur-lg sticky top-0 z-30 transition-all">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
+        
+        {/* 1. Brand Logo */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#00c57c] to-emerald-800 flex items-center justify-center text-white shadow-md shadow-emerald-950/40">
+            <Layers className="w-4 h-4" />
           </div>
+          <span className="font-bold text-base tracking-tight text-white hidden xs:inline-block">
+            Isla
+          </span>
         </div>
 
-        {/* Mode Selector & Desktop Action Buttons */}
-        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-end">
+        {/* 2. Core Study Modes (Centered Switcher) */}
+        <nav className="flex items-center bg-[#131b2e] p-1 rounded-xl border border-[#1f2b45] text-xs font-semibold shadow-inner">
+          <button
+            onClick={() => setMode('learn')}
+            className={`px-3 sm:px-4 py-1.5 rounded-lg transition-all text-center ${
+              mode === 'learn'
+                ? 'bg-slate-800 text-[#00c57c] shadow-sm font-bold'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Aprender
+          </button>
+
+          <button
+            onClick={() => setMode('active')}
+            className={`px-3 sm:px-4 py-1.5 rounded-lg transition-all text-center ${
+              mode === 'active'
+                ? 'bg-slate-800 text-[#00c57c] shadow-sm font-bold'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Recordação Ativa
+          </button>
+        </nav>
+
+        {/* 3. Action Hub: Tools Menu + New Card CTA */}
+        <div className="flex items-center gap-2 shrink-0">
           
-          {/* Mode Switcher: 1. Aprender | 2. Recordação Ativa */}
-          <div className="bg-[#131b2e] p-1 rounded-xl border border-[#1f2b45] flex items-center text-xs font-semibold w-full sm:w-auto justify-between sm:justify-start">
+          {/* PWA Install Button (when available) */}
+          {installPrompt && (
             <button
-              onClick={() => setMode('learn')}
-              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition-all text-center ${
-                mode === 'learn'
-                  ? 'bg-slate-800 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              onClick={onInstall}
+              className="p-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-[#00c57c] rounded-xl border border-emerald-500/30 transition active:scale-95"
+              title="Instalar Isla como Aplicativo"
             >
-              Aprender
+              <Download className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Tools & Management Dropdown Menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className={`p-2 rounded-xl border transition active:scale-95 flex items-center justify-center ${
+                isMenuOpen
+                  ? 'bg-slate-800 text-white border-slate-600'
+                  : 'bg-[#131b2e] hover:bg-slate-800 text-slate-300 border-[#1f2b45]'
+              }`}
+              title="Gerenciamento, Backup e Estatísticas"
+            >
+              <MoreVertical className="w-4 h-4" />
             </button>
 
-            <button
-              onClick={() => setMode('active')}
-              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition-all text-center ${
-                mode === 'active'
-                  ? 'bg-slate-800 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Recordação Ativa
-            </button>
-          </div>
+            {/* Dropdown Popover */}
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-[#131b2e] border border-[#1f2b45] rounded-2xl shadow-2xl p-1.5 z-50 text-xs space-y-1 animate-fadeIn">
+                <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b border-[#1f2b45]/60">
+                  Dados &amp; Gerenciamento
+                </div>
 
-          {/* Desktop action buttons */}
-          <div className="hidden sm:flex items-center gap-2">
-            {installPrompt && (
-              <button
-                onClick={onInstall}
-                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition active:scale-95"
-                title="Instalar como aplicativo"
-              >
-                <Download className="w-3.5 h-3.5 text-[#00c57c]" />
-                <span>Instalar</span>
-              </button>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenManager();
+                  }}
+                  className="w-full px-3 py-2 text-slate-200 hover:bg-slate-800/80 rounded-xl transition flex items-center gap-2.5 text-left"
+                >
+                  <Database className="w-4 h-4 text-[#00c57c]" />
+                  <span>Gerenciador de Cards</span>
+                  <span className="ml-auto text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 font-mono">
+                    {phrases.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenImport();
+                  }}
+                  className="w-full px-3 py-2 text-slate-200 hover:bg-slate-800/80 rounded-xl transition flex items-center gap-2.5 text-left"
+                >
+                  <FileJson className="w-4 h-4 text-blue-400" />
+                  <span>Importar JSON</span>
+                </button>
+
+                <button
+                  onClick={handleExportClick}
+                  disabled={isExporting || phrases.length === 0}
+                  className="w-full px-3 py-2 text-slate-200 hover:bg-slate-800/80 rounded-xl transition flex items-center gap-2.5 text-left disabled:opacity-40"
+                >
+                  {isExporting ? (
+                    <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
+                  ) : exportSuccess ? (
+                    <Check className="w-4 h-4 text-[#00c57c]" />
+                  ) : (
+                    <FolderArchive className="w-4 h-4 text-emerald-400" />
+                  )}
+                  <span>{exportSuccess ? 'Backup Baixado!' : 'Exportar Backup (.json)'}</span>
+                </button>
+
+                <div className="border-t border-[#1f2b45]/60 my-1"></div>
+
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenStats();
+                  }}
+                  className="w-full px-3 py-2 text-slate-200 hover:bg-slate-800/80 rounded-xl transition flex items-center gap-2.5 text-left"
+                >
+                  <BarChart3 className="w-4 h-4 text-amber-400" />
+                  <span>Estatísticas &amp; Progresso</span>
+                </button>
+              </div>
             )}
-
-            <button
-              onClick={onOpenImport}
-              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition active:scale-95"
-              title="Importar cards / backup via JSON"
-            >
-              <FileJson className="w-3.5 h-3.5 text-blue-400" />
-              <span>Importar JSON</span>
-            </button>
-
-            <button
-              onClick={handleExportClick}
-              disabled={isExporting || phrases.length === 0}
-              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition active:scale-95 disabled:opacity-40"
-              title="Exportar todos os cards e áudios para backup"
-            >
-              {isExporting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
-              ) : exportSuccess ? (
-                <Check className="w-3.5 h-3.5 text-[#00c57c]" />
-              ) : (
-                <FolderArchive className="w-3.5 h-3.5 text-emerald-400" />
-              )}
-              <span>{exportSuccess ? 'Backup Salvo!' : 'Exportar Backup'}</span>
-            </button>
-
-            <button
-              onClick={onOpenStats}
-              className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-xl transition active:scale-95"
-              title="Ver Estatísticas"
-            >
-              <BarChart3 className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={onOpenAdd}
-              className="px-3.5 py-2 bg-[#00c57c] hover:bg-[#00af6e] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-lg shadow-emerald-950/40 transition hover:scale-[1.02] active:scale-95"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Novo Card</span>
-            </button>
           </div>
+
+          {/* Primary CTA: Add New Card */}
+          <button
+            onClick={onOpenAdd}
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-[#00c57c] hover:bg-[#00af6e] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-lg shadow-emerald-950/40 transition hover:scale-[1.02] active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Novo Card</span>
+          </button>
 
         </div>
 
@@ -173,3 +196,4 @@ export default function Header({
     </header>
   );
 }
+

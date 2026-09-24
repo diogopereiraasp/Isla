@@ -173,19 +173,19 @@ export default function Flashcard({
           </button>
         </div>
 
-        {/* Learn Mode Front Audio & PlayPhrase Video Button */}
+        {/* Learn Mode Front Audio & YouGlish Button */}
         {isLearnMode && (
           <div className="mt-3.5 sm:mt-4 flex items-center justify-center gap-2 flex-wrap">
             <AudioPlayerButton phrase={phrase} label="Ouvir Pronúncia" />
             <a
-              href={`https://www.playphrase.me/#/search?q=${encodeURIComponent(phrase.target.replace(/\[sound:[^\]]+\]/gi, '').replace(/[^\w\s'?]/gi, ' ').trim())}`}
+              href={`https://youglish.com/pronounce/${encodeURIComponent(phrase.target.replace(/\[sound:[^\]]+\]/gi, '').replace(/[^\w\s'?]/gi, ' ').trim().replace(/\s+/g, '_'))}/english`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm"
-              title="Ver cenas reais de filmes e séries com esta frase no PlayPhrase.me (Sem limite diário)"
+              title="Ver exemplos reais falados em vídeos no YouGlish"
             >
               <Video className="w-3.5 h-3.5 text-rose-400" />
-              <span>Cenas em Vídeo</span>
+              <span>Ver no YouGlish</span>
               <ExternalLink className="w-3 h-3 opacity-60" />
             </a>
           </div>
@@ -214,20 +214,20 @@ export default function Flashcard({
               </button>
             </div>
 
-            {/* Audio Button & PlayPhrase on Reveal */}
+            {/* Audio Button & YouGlish on Reveal */}
             <div className="mt-3 sm:mt-3.5 flex items-center justify-center gap-2 flex-wrap">
               {isActiveMode && (
                 <AudioPlayerButton phrase={phrase} />
               )}
               <a
-                href={`https://www.playphrase.me/#/search?q=${encodeURIComponent(phrase.target.replace(/\[sound:[^\]]+\]/gi, '').replace(/[^\w\s'?]/gi, ' ').trim())}`}
+                href={`https://youglish.com/pronounce/${encodeURIComponent(phrase.target.replace(/\[sound:[^\]]+\]/gi, '').replace(/[^\w\s'?]/gi, ' ').trim().replace(/\s+/g, '_'))}/english`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-3 py-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm"
-                title="Ver cenas reais de filmes e séries com esta frase no PlayPhrase.me (Sem limite diário)"
+                title="Ver exemplos reais falados em vídeos no YouGlish"
               >
                 <Video className="w-3.5 h-3.5 text-rose-400" />
-                <span>Cenas em Vídeo</span>
+                <span>Ver no YouGlish</span>
                 <ExternalLink className="w-3 h-3 opacity-60" />
               </a>
             </div>

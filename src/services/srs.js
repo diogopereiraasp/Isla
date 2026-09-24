@@ -83,25 +83,64 @@ export function isCardDue(card) {
 }
 
 export function getSRSStats(phrases = []) {
-  let dueCount = 0;
-  let masteredCount = 0; // interval >= 15 (teto atingido)
-  let learningCount = 0;
+  let newCount = 0;       // Nunca revisados (repetitions === 0 e sem histórico)
+  let learningCount = 0;  // Em aprendizado rápido (< 3 dias de intervalo)
+  let reviewingCount = 0; // Em consolidação (3 a 14 dias de intervalo)
+  let masteredCount = 0;  // Automatizados / Fluentes (intervalo >= 15 dias)
+  let dueCount = 0;       // Pendentes para hoje
+  let withAudioCount = 0; // Cards com áudio anexado
+
+  let totalReviews = 0;
+  let successfulReviews = 0;
 
   phrases.forEach(p => {
+    const reps = p.repetitions || 0;
+    const interval = p.interval || 0;
+    const history = p.history || [];
+
+    if (p.audioBlob || p.hasAudio) {
+      withAudioCount++;
+    }
+
     if (isCardDue(p)) {
       dueCount++;
     }
-    if ((p.interval || 0) >= MAX_INTERVAL_DAYS) {
+
+    if (reps === 0 && history.length === 0) {
+      newCount++;
+    } else if (interval >= MAX_INTERVAL_DAYS) {
       masteredCount++;
+    } else if (interval >= 3) {
+      reviewingCount++;
     } else {
       learningCount++;
     }
+
+    // Calcula taxa de acerto histórico
+    history.forEach(h => {
+      totalReviews++;
+      if (h.grade >= 4) {
+        successfulReviews++;
+      }
+    });
   });
 
+  const total = phrases.length;
+  const accuracyRate = totalReviews > 0 ? Math.round((successfulReviews / totalReviews) * 100) : 100;
+  const masteredPercentage = total > 0 ? Math.round((masteredCount / total) * 100) : 0;
+  const audioPercentage = total > 0 ? Math.round((withAudioCount / total) * 100) : 0;
+
   return {
-    total: phrases.length,
-    dueToday: dueCount,
+    total,
+    newCards: newCount,
+    learning: learningCount,
+    reviewing: reviewingCount,
     mastered: masteredCount,
-    learning: learningCount
+    dueToday: dueCount,
+    withAudio: withAudioCount,
+    audioPercentage,
+    totalReviews,
+    accuracyRate,
+    masteredPercentage
   };
 }

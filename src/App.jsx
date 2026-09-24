@@ -88,6 +88,15 @@ export default function App() {
     }
   };
 
+  // Keep currentIndex in bounds when filtered list changes
+  useEffect(() => {
+    if (filteredPhrases.length === 0) {
+      setCurrentIndex(0);
+    } else if (currentIndex >= filteredPhrases.length) {
+      setCurrentIndex(0);
+    }
+  }, [filteredPhrases.length]);
+
   const onSRSFeedback = async (grade) => {
     if (!currentPhrase) return;
 
@@ -100,8 +109,8 @@ export default function App() {
       });
     }
 
+    setIsRevealed(false);
     await handleSRSFeedback(currentPhrase, grade);
-    handleNext();
   };
 
   // Keyboard navigation

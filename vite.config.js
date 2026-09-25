@@ -19,11 +19,11 @@ export default defineConfig({
         background_color: '#0a0f1d',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/',
-        start_url: '/',
+        scope: '/Isla/',
+        start_url: '/Isla/',
         icons: [
           {
-            src: '/favicon.svg',
+            src: '/Isla/favicon.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
             purpose: 'any maskable'

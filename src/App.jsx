@@ -160,7 +160,7 @@ export default function App() {
   }, [isRevealed, currentPhrase, mode, isAddModalOpen, isImportModalOpen, isManagerOpen, isStatsOpen, filteredPhrases.length]);
 
   return (
-    <div className="min-h-screen flex flex-col justify-between selection:bg-emerald-500/30 selection:text-emerald-200">
+    <div className="min-h-screen min-h-[100dvh] flex flex-col justify-between selection:bg-emerald-500/30 selection:text-emerald-200">
       
       {/* Top Header */}
       <Header
@@ -180,7 +180,7 @@ export default function App() {
       />
 
       {/* Main Flashcard Stage */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 w-full flex-1 flex flex-col">
+      <main className="max-w-4xl mx-auto px-3 sm:px-6 py-2 sm:py-6 w-full flex-1 flex flex-col justify-between">
         
         {/* Anki-style Tag Filter Bar */}
         <IslandFilterBar
@@ -194,8 +194,11 @@ export default function App() {
           dueCount={srsStats.dueToday}
         />
 
-        {/* Center Flashcard */}
-        <div className="flex-1 flex flex-col justify-center items-center my-auto py-2">
+        {/* Flashcard with 1:2 top-to-bottom space ratio on mobile */}
+        <div className="flex-1 flex flex-col items-center w-full">
+          {/* Top spacer (1 share) */}
+          <div className="flex-[1] sm:flex-1" />
+
           {loading ? (
             <div className="text-slate-400 animate-pulse text-sm">Carregando Isla...</div>
           ) : (
@@ -223,7 +226,7 @@ export default function App() {
 
           {/* Keyboard Helpers (only when cards exist) */}
           {currentPhrase && (
-            <div className="mt-5 flex items-center justify-center flex-wrap gap-4 text-[11px] text-slate-500">
+            <div className="mt-4 flex items-center justify-center flex-wrap gap-4 text-[11px] text-slate-500">
               <span className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-300 font-mono">Espaço</kbd>
                 <span>{isRevealed ? "Tocar Áudio" : "Ver Resultado"}</span>
@@ -244,6 +247,9 @@ export default function App() {
               )}
             </div>
           )}
+
+          {/* Bottom spacer (2 shares on mobile, 1 share on desktop) */}
+          <div className="flex-[2] sm:flex-1" />
         </div>
 
       </main>

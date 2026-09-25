@@ -12,7 +12,7 @@ export default function IslandFilterBar({
   dueCount
 }) {
   return (
-    <div className="flex items-center justify-between gap-2.5 mb-4 sm:mb-6 pb-2 border-b border-[#1f2b45]/60 text-xs">
+    <div className="flex items-center justify-between gap-2.5 mb-2 sm:mb-6 pb-2 border-b border-[#1f2b45]/60 text-xs">
       
       {/* Tags Pills Slider */}
       <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1 scrollbar-none flex-1 min-w-0">

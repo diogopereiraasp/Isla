@@ -109,6 +109,8 @@ export function playPhraseAudio(phrase) {
   return new Promise((resolve) => {
     try {
       let audioBlob = phrase.audioBlob;
+      let audioUrl = '';
+      let shouldRevoke = false;
 
       // 1. Se for string base64 / data-uri direta
       if (typeof audioBlob === 'string') {

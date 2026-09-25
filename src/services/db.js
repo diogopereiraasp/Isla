@@ -57,12 +57,19 @@ export async function savePhrase(phrase) {
 }
 
 export async function importManyPhrases(newPhrases = []) {
+  // 1. Normalizar todos os áudios ANTES de abrir a transação
+  // Isso evita que a transação do IndexedDB expire/finalize (auto-commit) devido a awaits assíncronos no loop
+  const normalizedPhrases = await Promise.all(
+    newPhrases.map(phrase => normalizeAudioForStorage(phrase))
+  );
+
   const db = await getDB();
   const tx = db.transaction(STORE_NAME, 'readwrite');
-  for (const phrase of newPhrases) {
-    const normalized = await normalizeAudioForStorage(phrase);
-    await tx.store.put(normalized);
+  
+  for (const item of normalizedPhrases) {
+    tx.store.put(item);
   }
+  
   await tx.done;
   return newPhrases;
 }

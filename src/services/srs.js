@@ -196,6 +196,17 @@ export function calculateSRS(card, grade, mode = 'learn') {
 }
 
 /**
+ * Verifica se o card é NOVO no modo especificado (nunca avaliado com nota no modo)
+ */
+export function isCardNew(card, mode = 'learn') {
+  if (!card) return false;
+  const srs = getCardSRS(card, mode);
+  const reps = srs.repetitions || 0;
+  const history = srs.history || [];
+  return reps === 0 && history.length === 0 && !srs.lastReviewed;
+}
+
+/**
  * Verifica se o card está pendente para o modo especificado
  */
 export function isCardDue(card, mode = 'learn') {
@@ -234,7 +245,7 @@ export function getSRSStats(phrases = [], mode = 'learn') {
       dueCount++;
     }
 
-    if (reps === 0 && history.length === 0) {
+    if (isCardNew(p, mode)) {
       newCount++;
     } else if (interval >= MAX_INTERVAL_DAYS) {
       masteredCount++;

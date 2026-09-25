@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Eye, ArrowLeft, ArrowRight, Sparkles, Clock, Tag, Copy, Check, Video, ExternalLink } from 'lucide-react';
 import AudioPlayerButton from './AudioPlayerButton';
 import SRSFeedbackButtons from './SRSFeedbackButtons';
-import { getCardSRS } from '../services/srs';
+import { getCardSRS, isCardNew } from '../services/srs';
 
 export default function Flashcard({
   phrase,
@@ -136,12 +136,17 @@ export default function Flashcard({
               </span>
             ))
           ) : null}
-          {cardSRS.interval > 0 && (
+          {isCardNew(phrase, mode) ? (
+            <span className="flex items-center gap-1 text-[10px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded-md border border-blue-500/20 whitespace-nowrap font-semibold">
+              <Sparkles className="w-2.5 h-2.5" />
+              Novo
+            </span>
+          ) : cardSRS.interval > 0 ? (
             <span className="flex items-center gap-1 text-[10px] text-emerald-400/90 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20 whitespace-nowrap">
               <Clock className="w-2.5 h-2.5" />
               {cardSRS.interval < 1 ? 'hoje' : `${Math.round(cardSRS.interval)}d`}
             </span>
-          )}
+          ) : null}
         </div>
 
         <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-[#182338] text-slate-300 border border-slate-700/60 text-[10px] sm:text-[11px] font-medium tracking-wide whitespace-nowrap shrink-0">

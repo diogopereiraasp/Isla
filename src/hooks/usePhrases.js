@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAllPhrases, savePhrase, deletePhrase, importManyPhrases } from '../services/db';
-import { calculateSRS, isCardDue } from '../services/srs';
+import { calculateSRS, isCardDue, isCardNew, getCardSRS } from '../services/srs';
 
 export function usePhrases(mode = 'learn') {
   const [phrases, setPhrases] = useState([]);
@@ -189,13 +189,34 @@ export function usePhrases(mode = 'learn') {
     return updatedCard;
   };
 
-  // Filtragem por Tags e Modo Ativo
-  const filteredPhrases = phrases.filter(p => {
-    const cardTags = p.tags || [];
-    const matchesTag = selectedTag === 'all' || cardTags.includes(selectedTag);
-    const matchesDue = dueOnlyFilter ? isCardDue(p, mode) : true;
-    return matchesTag && matchesDue;
-  });
+  // Filtragem por Tags e Modo Ativo com prioridade para Cards Novos
+  const filteredPhrases = phrases
+    .filter(p => {
+      const cardTags = p.tags || [];
+      const matchesTag = selectedTag === 'all' || cardTags.includes(selectedTag);
+      const matchesDue = dueOnlyFilter ? isCardDue(p, mode) : true;
+      return matchesTag && matchesDue;
+    })
+    .sort((a, b) => {
+      const aIsNew = isCardNew(a, mode);
+      const bIsNew = isCardNew(b, mode);
+
+      // 1. Cards novos SEMPRE vêm primeiro
+      if (aIsNew && !bIsNew) return -1;
+      if (!aIsNew && bIsNew) return 1;
+
+      // 2. Entre cards novos, mantém ordem original por ID
+      if (aIsNew && bIsNew) {
+        return (a.id || 0) - (b.id || 0);
+      }
+
+      // 3. Entre cards em revisão, prioriza os com data de vencimento mais antiga
+      const aSRS = getCardSRS(a, mode);
+      const bSRS = getCardSRS(b, mode);
+      const aDue = aSRS.dueDate ? new Date(aSRS.dueDate).getTime() : 0;
+      const bDue = bSRS.dueDate ? new Date(bSRS.dueDate).getTime() : 0;
+      return aDue - bDue;
+    });
 
   // Lista única de tags existentes
   const allTags = Array.from(

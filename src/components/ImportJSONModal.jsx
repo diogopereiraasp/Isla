@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { X, FileJson, Upload, Check, AlertCircle, Copy, Music, Loader2, Sparkles, Wand2 } from 'lucide-react';
-import { generateElevenLabsAudioBlob, DEFAULT_ELEVENLABS_VOICES } from '../services/audioService';
+import React, { useState } from 'react';
+import { X, FileJson, Upload, Check, AlertCircle, Copy, Music, Loader2, Sparkles, Wand2, Key } from 'lucide-react';
+import ApiKeyModal from './ApiKeyModal';
+import { generateElevenLabsAudioBlob, DEFAULT_ELEVENLABS_VOICES, getStoredApiKey } from '../services/audioService';
 import { parseBackupCards } from '../services/exportService';
 
 const EXAMPLE_JSON = [
@@ -21,7 +22,7 @@ export default function ImportJSONModal({ isOpen, onClose, onImport, existingPhr
   const [audioFilesMap, setAudioFilesMap] = useState({});
   const [generateWithElevenLabs, setGenerateWithElevenLabs] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState('random'); // Sorteia aleatoriamente
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('isla_elevenlabs_key') || 'sk_14b2355cb1e6595503cd0e2f2b9a2996f2e97148084497c1');
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   
   // Progress tracking
   const [isProcessing, setIsProcessing] = useState(false);
@@ -31,12 +32,6 @@ export default function ImportJSONModal({ isOpen, onClose, onImport, existingPhr
   const [error, setError] = useState(null);
   const [successCount, setSuccessCount] = useState(null);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (apiKey) {
-      localStorage.setItem('isla_elevenlabs_key', apiKey);
-    }
-  }, [apiKey]);
 
   if (!isOpen) return null;
 
@@ -64,13 +59,19 @@ export default function ImportJSONModal({ isOpen, onClose, onImport, existingPhr
     setAudioFilesMap(newAudios);
   };
 
-  const handleImportSubmit = async (e) => {
-    e.preventDefault();
+  const handleImportSubmit = async (e, customApiKey = '') => {
+    if (e && e.preventDefault) e.preventDefault();
     setError(null);
     setSuccessCount(null);
 
     if (!jsonText.trim()) {
       setError("Por favor, selecione um arquivo JSON ou cole o JSON dos cards.");
+      return;
+    }
+
+    const activeKey = customApiKey || getStoredApiKey();
+    if (generateWithElevenLabs && !activeKey) {
+      setIsApiKeyModalOpen(true);
       return;
     }
 
@@ -137,10 +138,15 @@ export default function ImportJSONModal({ isOpen, onClose, onImport, existingPhr
           if (textToSpeak) {
             setProgressText(`Gerando áudio IA ${i + 1}/${cardsArray.length}: "${textToSpeak.slice(0, 30)}..."`);
             try {
-              const blob = await generateElevenLabsAudioBlob(textToSpeak, apiKey, selectedVoice);
+              const blob = await generateElevenLabsAudioBlob(textToSpeak, activeKey, selectedVoice);
               card.audioBlob = blob;
             } catch (elevenErr) {
               console.warn(`ElevenLabs error card ${i+1}:`, elevenErr);
+              if (elevenErr.message && elevenErr.message.includes("não informada")) {
+                setIsProcessing(false);
+                setIsApiKeyModalOpen(true);
+                return;
+              }
             }
           }
         } else {
@@ -266,6 +272,21 @@ export default function ImportJSONModal({ isOpen, onClose, onImport, existingPhr
                     ))}
                   </select>
                 </div>
+
+                <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/60">
+                  <span className="text-slate-400">
+                    {getStoredApiKey() ? "🔑 Chave de API configurada" : "⚠️ Nenhuma chave de API salva"}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={isProcessing}
+                    onClick={() => setIsApiKeyModalOpen(true)}
+                    className="text-[#00c57c] hover:underline flex items-center gap-1 font-medium disabled:opacity-50"
+                  >
+                    <Key className="w-3 h-3" />
+                    <span>{getStoredApiKey() ? "Alterar Chave" : "Inserir Chave"}</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -368,6 +389,16 @@ export default function ImportJSONModal({ isOpen, onClose, onImport, existingPhr
         </form>
 
       </div>
+
+      {/* API Key Modal */}
+      <ApiKeyModal
+        isOpen={isApiKeyModalOpen}
+        onClose={() => setIsApiKeyModalOpen(false)}
+        onSaved={(newKey) => {
+          setIsApiKeyModalOpen(false);
+          handleImportSubmit(null, newKey);
+        }}
+      />
     </div>
   );
 }

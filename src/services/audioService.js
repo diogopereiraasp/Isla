@@ -20,13 +20,36 @@ export function getRandomVoiceId() {
   return AVAILABLE_VOICE_IDS[index];
 }
 
+export const ELEVENLABS_KEY_STORAGE = 'isla_elevenlabs_key';
+
+export function getStoredApiKey() {
+  try {
+    return localStorage.getItem(ELEVENLABS_KEY_STORAGE) || '';
+  } catch (_) {
+    return '';
+  }
+}
+
+export function setStoredApiKey(key) {
+  try {
+    if (key) {
+      localStorage.setItem(ELEVENLABS_KEY_STORAGE, key.trim());
+    } else {
+      localStorage.removeItem(ELEVENLABS_KEY_STORAGE);
+    }
+  } catch (_) {}
+}
+
 /**
  * Gera um Blob de áudio via API da ElevenLabs
  */
 export async function generateElevenLabsAudioBlob(text, apiKey = '', voiceId = 'random') {
   if (!text || !text.trim()) throw new Error("Texto vazio para geração de áudio");
   
-  const key = apiKey || localStorage.getItem('isla_elevenlabs_key') || 'sk_14b2355cb1e6595503cd0e2f2b9a2996f2e97148084497c1';
+  const key = apiKey || getStoredApiKey();
+  if (!key) {
+    throw new Error("Chave de API ElevenLabs não informada.");
+  }
   const cleanText = text.replace(/\[sound:[^\]]+\]/gi, '').replace(/\.{2,}/g, '').trim();
 
   const actualVoiceId = (voiceId === 'random' || !voiceId) ? getRandomVoiceId() : voiceId;

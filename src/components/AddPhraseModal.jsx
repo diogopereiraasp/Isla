@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Tag, Plus, Trash2, Upload, Sparkles, Loader2, Volume2, Play, Wand2 } from 'lucide-react';
+import { X, Tag, Plus, Trash2, Upload, Sparkles, Loader2, Volume2, Play, Wand2, Key } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
-import { generateElevenLabsAudioBlob, DEFAULT_ELEVENLABS_VOICES } from '../services/audioService';
+import ApiKeyModal from './ApiKeyModal';
+import { generateElevenLabsAudioBlob, DEFAULT_ELEVENLABS_VOICES, getStoredApiKey } from '../services/audioService';
 
 export default function AddPhraseModal({
   isOpen,
@@ -19,6 +20,7 @@ export default function AddPhraseModal({
   const [audioMode, setAudioMode] = useState('upload'); // 'upload' | 'record'
   const [isGeneratingEleven, setIsGeneratingEleven] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState('Xb7hH8MSUJpSbSDYk0k2'); // Alice (Free plan compatible)
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
   // Pre-fill on open/edit
   React.useEffect(() => {
@@ -83,15 +85,21 @@ export default function AddPhraseModal({
     }
   };
 
-  const handleGenerateElevenLabs = async () => {
+  const handleGenerateElevenLabs = async (customApiKey = '') => {
     if (!target.trim()) {
       alert("Digite a frase na Frente antes de gerar o áudio.");
       return;
     }
 
+    const currentKey = customApiKey || getStoredApiKey();
+    if (!currentKey) {
+      setIsApiKeyModalOpen(true);
+      return;
+    }
+
     try {
       setIsGeneratingEleven(true);
-      const blob = await generateElevenLabsAudioBlob(target.trim(), '', selectedVoice);
+      const blob = await generateElevenLabsAudioBlob(target.trim(), currentKey, selectedVoice);
       setAudioBlob(blob);
       setFileName(`Áudio ElevenLabs (${Math.round(blob.size / 1024)} KB)`);
       
@@ -101,7 +109,11 @@ export default function AddPhraseModal({
       audio.play().catch(e => console.warn("Preview error:", e));
     } catch (err) {
       console.warn("Erro no ElevenLabs:", err);
-      alert(`Não foi possível gerar áudio com ElevenLabs: ${err.message || 'Verifique sua chave e conexão.'}`);
+      if (err.message && err.message.includes("não informada")) {
+        setIsApiKeyModalOpen(true);
+      } else {
+        alert(`Não foi possível gerar áudio com ElevenLabs: ${err.message || 'Verifique sua chave e conexão.'}`);
+      }
     } finally {
       setIsGeneratingEleven(false);
     }
@@ -373,9 +385,23 @@ export default function AddPhraseModal({
                   </select>
                 </div>
 
+                <div className="flex items-center justify-between text-[11px] px-1 pt-0.5">
+                  <span className="text-slate-400">
+                    {getStoredApiKey() ? "🔑 Chave de API configurada" : "⚠️ Nenhuma chave de API salva"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsApiKeyModalOpen(true)}
+                    className="text-[#00c57c] hover:underline flex items-center gap-1 font-medium"
+                  >
+                    <Key className="w-3 h-3" />
+                    <span>{getStoredApiKey() ? "Alterar Chave" : "Inserir Chave"}</span>
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  onClick={handleGenerateElevenLabs}
+                  onClick={() => handleGenerateElevenLabs()}
                   disabled={isGeneratingEleven || !target.trim()}
                   className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-[#00c57c] hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition disabled:opacity-50 active:scale-95"
                 >
@@ -435,6 +461,16 @@ export default function AddPhraseModal({
         </form>
 
       </div>
+
+      {/* API Key Modal */}
+      <ApiKeyModal
+        isOpen={isApiKeyModalOpen}
+        onClose={() => setIsApiKeyModalOpen(false)}
+        onSaved={(newKey) => {
+          setIsApiKeyModalOpen(false);
+          handleGenerateElevenLabs(newKey);
+        }}
+      />
     </div>
   );
 }

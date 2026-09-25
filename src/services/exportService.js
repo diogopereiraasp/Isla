@@ -28,11 +28,12 @@ export function base64ToBlob(dataUrl) {
     const mimeMatch = parts[0].match(/:(.*?);/);
     const mime = mimeMatch ? mimeMatch[1] : 'audio/mpeg';
     const binary = atob(parts[1]);
-    const array = [];
-    for (let i = 0; i < binary.length; i++) {
-      array.push(binary.charCodeAt(i));
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary.charCodeAt(i);
     }
-    return new Blob([new Uint8Array(array)], { type: mime });
+    return new Blob([bytes.buffer], { type: mime });
   } catch (err) {
     console.warn("Erro ao converter base64 para Blob:", err);
     return null;

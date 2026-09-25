@@ -1,3 +1,5 @@
+import { base64ToBlob } from './exportService';
+
 let globalAudioInstance = null;
 
 export const DEFAULT_ELEVENLABS_VOICES = [
@@ -108,24 +110,36 @@ export function playPhraseAudio(phrase) {
     try {
       let audioBlob = phrase.audioBlob;
 
-      // Se for ArrayBuffer ou Uint8Array (possível após recuperação do IndexedDB)
+      // 1. Se for string base64 / data-uri direta
+      if (typeof audioBlob === 'string') {
+        if (audioBlob.startsWith('data:')) {
+          // Converter data-uri para blob no iOS para evitar bugs do WebKit com data-uri longas
+          const converted = base64ToBlob(audioBlob);
+          if (converted) {
+            audioBlob = converted;
+          } else {
+            audioUrl = audioBlob;
+          }
+        } else {
+          audioUrl = audioBlob;
+        }
+      }
+
+      // 2. Se for ArrayBuffer ou TypedArray vindo do IndexedDB
       if (audioBlob instanceof ArrayBuffer || ArrayBuffer.isView(audioBlob)) {
         audioBlob = new Blob([audioBlob], { type: 'audio/mpeg' });
       }
 
-      let audioUrl = '';
-      let shouldRevoke = false;
-
-      if (typeof audioBlob === 'string') {
-        audioUrl = audioBlob;
-      } else if (audioBlob instanceof Blob) {
-        // Assegura tipo mime audio/mpeg ou audio/mp4 para Safari
+      // 3. Se for Blob real
+      if (audioBlob instanceof Blob) {
         const mimeType = audioBlob.type || 'audio/mpeg';
         const properBlob = audioBlob.type ? audioBlob : new Blob([audioBlob], { type: mimeType });
         audioUrl = URL.createObjectURL(properBlob);
         shouldRevoke = true;
-      } else {
-        console.warn("Formato de áudio desconhecido:", audioBlob);
+      }
+
+      if (!audioUrl) {
+        console.warn("Nenhuma URL de áudio pôde ser gerada para:", phrase);
         return resolve();
       }
 

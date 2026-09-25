@@ -65,6 +65,7 @@ export async function generateElevenLabsAudioBlob(text, apiKey = '', voiceId = '
 
 /**
  * Reproduz exclusivamente o áudio gravado/gerado do card. Sem sintetizador de fala do sistema.
+ * Compatível com iOS Safari / WebKit e PWA.
  */
 export function playPhraseAudio(phrase) {
   if (!phrase || !phrase.audioBlob) {
@@ -74,32 +75,68 @@ export function playPhraseAudio(phrase) {
   if (globalAudioInstance) {
     try {
       globalAudioInstance.pause();
-      globalAudioInstance.currentTime = 0;
+      globalAudioInstance.removeAttribute('src');
+      globalAudioInstance.load();
     } catch (_) {}
     globalAudioInstance = null;
   }
 
   return new Promise((resolve) => {
     try {
-      const audioUrl = typeof phrase.audioBlob === 'string' 
-        ? phrase.audioBlob 
-        : URL.createObjectURL(phrase.audioBlob);
+      let audioBlob = phrase.audioBlob;
+
+      // Se for ArrayBuffer ou Uint8Array (possível após recuperação do IndexedDB)
+      if (audioBlob instanceof ArrayBuffer || ArrayBuffer.isView(audioBlob)) {
+        audioBlob = new Blob([audioBlob], { type: 'audio/mpeg' });
+      }
+
+      let audioUrl = '';
+      let shouldRevoke = false;
+
+      if (typeof audioBlob === 'string') {
+        audioUrl = audioBlob;
+      } else if (audioBlob instanceof Blob) {
+        // Assegura tipo mime audio/mpeg ou audio/mp4 para Safari
+        const mimeType = audioBlob.type || 'audio/mpeg';
+        const properBlob = audioBlob.type ? audioBlob : new Blob([audioBlob], { type: mimeType });
+        audioUrl = URL.createObjectURL(properBlob);
+        shouldRevoke = true;
+      } else {
+        console.warn("Formato de áudio desconhecido:", audioBlob);
+        return resolve();
+      }
 
       const audio = new Audio();
+      audio.preload = 'auto';
+      audio.playsInline = true;
+      audio.setAttribute('playsinline', 'true');
+      audio.setAttribute('webkit-playsinline', 'true');
+      
       globalAudioInstance = audio;
-      audio.src = audioUrl;
 
-      audio.onended = () => resolve();
-      audio.onerror = (err) => {
-        console.warn("Erro ao reproduzir arquivo de áudio:", err);
+      const cleanup = () => {
+        if (shouldRevoke && audioUrl) {
+          try {
+            URL.revokeObjectURL(audioUrl);
+          } catch (_) {}
+        }
         resolve();
       };
+
+      audio.onended = cleanup;
+      audio.onerror = (err) => {
+        console.warn("Erro ao reproduzir arquivo de áudio no Safari/iOS:", err, audio.error);
+        cleanup();
+      };
+
+      audio.src = audioUrl;
+      audio.load();
 
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.catch((playErr) => {
-          console.warn("Autoplay bloqueado:", playErr);
-          resolve();
+          console.warn("Autoplay/Reprodução bloqueada pelo navegador:", playErr);
+          cleanup();
         });
       }
     } catch (err) {

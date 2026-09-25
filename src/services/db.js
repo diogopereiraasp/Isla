@@ -1,4 +1,5 @@
 import { openDB } from 'idb';
+import { blobToBase64 } from './exportService';
 
 const DB_NAME = 'IslaApp_DB';
 const DB_VERSION = 2;
@@ -15,8 +16,9 @@ export async function getDB() {
 }
 
 /**
- * Converte qualquer formato de áudio (Blob, ArrayBuffer, string) em ArrayBuffer puro
- * para garantir armazenamento 100% confiável no IndexedDB do iOS/WebKit.
+ * Converte qualquer formato de áudio em string Base64 Data-URL.
+ * No iOS PWA (Modo Standalone da tela de início), salvar Blobs ou ArrayBuffers no IndexedDB
+ * pode perder a referência de memória ao reiniciar o app. String Data-URL é 100% imutável e à prova de falhas.
  */
 async function normalizeAudioForStorage(phrase) {
   if (!phrase) return phrase;
@@ -24,19 +26,10 @@ async function normalizeAudioForStorage(phrase) {
   
   if (copy.audioBlob) {
     if (copy.audioBlob instanceof Blob) {
-      copy.audioBlob = await copy.audioBlob.arrayBuffer();
-      copy.audioMime = copy.audioBlob.type || 'audio/mpeg';
-    } else if (typeof copy.audioBlob === 'string' && copy.audioBlob.startsWith('data:')) {
-      try {
-        const parts = copy.audioBlob.split(',');
-        const binary = atob(parts[1]);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-        copy.audioBlob = bytes.buffer;
-        copy.audioMime = 'audio/mpeg';
-      } catch (_) {}
+      copy.audioBlob = await blobToBase64(copy.audioBlob);
+    } else if (copy.audioBlob instanceof ArrayBuffer || ArrayBuffer.isView(copy.audioBlob)) {
+      const blob = new Blob([copy.audioBlob], { type: copy.audioMime || 'audio/mpeg' });
+      copy.audioBlob = await blobToBase64(blob);
     }
   }
   

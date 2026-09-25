@@ -115,7 +115,6 @@ export function playPhraseAudio(phrase) {
       // 1. Se for string base64 / data-uri direta
       if (typeof audioBlob === 'string') {
         if (audioBlob.startsWith('data:')) {
-          // Converter data-uri para blob no iOS para evitar bugs do WebKit com data-uri longas
           const converted = base64ToBlob(audioBlob);
           if (converted) {
             audioBlob = converted;
@@ -127,12 +126,12 @@ export function playPhraseAudio(phrase) {
         }
       }
 
-      // 2. Se for ArrayBuffer ou TypedArray vindo do IndexedDB
+      // 2. Se for ArrayBuffer ou TypedArray
       if (audioBlob instanceof ArrayBuffer || ArrayBuffer.isView(audioBlob)) {
         audioBlob = new Blob([audioBlob], { type: 'audio/mpeg' });
       }
 
-      // 3. Se for Blob real
+      // 3. Se for Blob
       if (audioBlob instanceof Blob) {
         const mimeType = audioBlob.type || 'audio/mpeg';
         const properBlob = audioBlob.type ? audioBlob : new Blob([audioBlob], { type: mimeType });

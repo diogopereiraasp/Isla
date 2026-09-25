@@ -14,6 +14,35 @@ export async function getDB() {
   });
 }
 
+/**
+ * Converte qualquer formato de áudio (Blob, ArrayBuffer, string) em ArrayBuffer puro
+ * para garantir armazenamento 100% confiável no IndexedDB do iOS/WebKit.
+ */
+async function normalizeAudioForStorage(phrase) {
+  if (!phrase) return phrase;
+  const copy = { ...phrase };
+  
+  if (copy.audioBlob) {
+    if (copy.audioBlob instanceof Blob) {
+      copy.audioBlob = await copy.audioBlob.arrayBuffer();
+      copy.audioMime = copy.audioBlob.type || 'audio/mpeg';
+    } else if (typeof copy.audioBlob === 'string' && copy.audioBlob.startsWith('data:')) {
+      try {
+        const parts = copy.audioBlob.split(',');
+        const binary = atob(parts[1]);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        copy.audioBlob = bytes.buffer;
+        copy.audioMime = 'audio/mpeg';
+      } catch (_) {}
+    }
+  }
+  
+  return copy;
+}
+
 export async function getAllPhrases() {
   const db = await getDB();
   const phrases = await db.getAll(STORE_NAME);
@@ -22,7 +51,8 @@ export async function getAllPhrases() {
 
 export async function savePhrase(phrase) {
   const db = await getDB();
-  await db.put(STORE_NAME, phrase);
+  const normalized = await normalizeAudioForStorage(phrase);
+  await db.put(STORE_NAME, normalized);
   return phrase;
 }
 
@@ -30,7 +60,8 @@ export async function importManyPhrases(newPhrases = []) {
   const db = await getDB();
   const tx = db.transaction(STORE_NAME, 'readwrite');
   for (const phrase of newPhrases) {
-    await tx.store.put(phrase);
+    const normalized = await normalizeAudioForStorage(phrase);
+    await tx.store.put(normalized);
   }
   await tx.done;
   return newPhrases;

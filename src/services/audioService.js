@@ -153,7 +153,10 @@ export function playPhraseAudio(phrase) {
       
       globalAudioInstance = audio;
 
+      let hasCleanedUp = false;
       const cleanup = () => {
+        if (hasCleanedUp) return;
+        hasCleanedUp = true;
         if (shouldRevoke && audioUrl) {
           try {
             URL.revokeObjectURL(audioUrl);
@@ -162,18 +165,28 @@ export function playPhraseAudio(phrase) {
         resolve();
       };
 
-      audio.onended = cleanup;
+      // Timeout de segurança: se o Safari travar o áudio, destrava o botão em 10s
+      const timeoutId = setTimeout(() => {
+        cleanup();
+      }, 10000);
+
+      audio.onended = () => {
+        clearTimeout(timeoutId);
+        cleanup();
+      };
+      
       audio.onerror = (err) => {
+        clearTimeout(timeoutId);
         console.warn("Erro ao reproduzir arquivo de áudio no Safari/iOS:", err, audio.error);
         cleanup();
       };
 
       audio.src = audioUrl;
-      audio.load();
 
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.catch((playErr) => {
+          clearTimeout(timeoutId);
           console.warn("Autoplay/Reprodução bloqueada pelo navegador:", playErr);
           cleanup();
         });
